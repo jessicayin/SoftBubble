@@ -1,0 +1,10 @@
+function xyz = rise_bubble(p, t, a, h)
+% Makes a mesh for a bubble from the mesh of a circle.
+
+R = 
+
+z = sqrt(R*R - p(:,1).^2 - p(:,2).^2 + 1.0e-10) - R + h;
+
+xyz = [p z];
+
+
