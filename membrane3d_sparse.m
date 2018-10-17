@@ -1,4 +1,4 @@
-function [node_u, K, F] = membrane3d_sparse(node_xyz, element_node)
+function [K, F] = membrane3d_sparse(node_xyz, element_node, stiffness, pr, K, assemble_stiffness)
 % node_xyz has size num_nodes x 3.
 % element_node has size num_elements x 3.
 
@@ -61,7 +61,7 @@ function [node_u, K, F] = membrane3d_sparse(node_xyz, element_node)
 %  Assemble the finite element coefficient matrix A and the right-hand side F.
 %
   [ a, f ] = assemble_poisson_sparse ( node_num, node_xyz, ...
-    element_num, element_node, quad_num, nz_num );
+    element_num, element_node, quad_num, nz_num, stiffness, pr, K, assemble_stiffness);
 
   if ( debugging )
 
@@ -76,8 +76,7 @@ function [node_u, K, F] = membrane3d_sparse(node_xyz, element_node)
 %
 %  Adjust the linear system to account for Dirichlet boundary conditions.
 %
-  [ a, f ] = dirichlet_apply_sparse ( node_num, node_xyz, node_condition, ...
-    a, f );
+  [ a, f ] = dirichlet_apply_sparse ( node_num, node_xyz, node_condition, a, f);
 
   if ( debugging )
 
@@ -92,19 +91,19 @@ function [node_u, K, F] = membrane3d_sparse(node_xyz, element_node)
 %
 %  Solve the linear system using MATLAB's sparse solver.
 %
-  node_u = a \ f;
+%  node_u = a \ f;
 
-  r8vec_print_some ( node_num, node_u, 1, 10, ...
-    '  Part of the solution vector:' );
+  %r8vec_print_some ( node_num, node_u, 1, 10, ...
+  %  '  Part of the solution vector:' );
 
-  node_r = a * node_u - f;
+  %node_r = a * node_u - f;
 
   %node_r = residual_poisson ( node_num, node_xyz, node_condition, ...
   %  element_num, element_node, quad_num, a, f, node_u );
 
-  fprintf ( 1, '\n' );
-  fprintf ( 1, '  Maximum absolute residual = %f\n',  ...
-    max ( abs ( node_r(1:node_num) ) ) );
+  %fprintf ( 1, '\n' );
+  %fprintf ( 1, '  Maximum absolute residual = %f\n',  ...
+  %  max ( abs ( node_r(1:node_num) ) ) );
 
   K = a;
   F = f;
@@ -112,7 +111,7 @@ function [node_u, K, F] = membrane3d_sparse(node_xyz, element_node)
   return
 end
 function [ a, f ] = assemble_poisson_sparse ( node_num, node_xyz, ...
-  element_num, element_node, quad_num, nz_num )
+  element_num, element_node, quad_num, nz_num, stiffness, pr, K, assemble_stiffness)
 
 %*****************************************************************************80
 %
@@ -173,7 +172,11 @@ function [ a, f ] = assemble_poisson_sparse ( node_num, node_xyz, ...
   fprintf ( 1, 'ASSEMBLE_POISSON_SPARSE:\n' );
   fprintf ( 1, '  Setting up sparse Poisson matrix with NZ_NUM = %d\n', nz_num );
 
-  a = sparse ( [], [], [], node_num, node_num, nz_num );
+  if(assemble_stiffness)
+    a = sparse ( [], [], [], node_num, node_num, nz_num );
+  else
+    a = K;
+  end
 %
 %  Get the quadrature weights and nodes.
 %
@@ -240,8 +243,18 @@ function [ a, f ] = assemble_poisson_sparse ( node_num, node_xyz, ...
 
     %TODO: passing phys_xy_T makes no sense. but now these are constant
     %anyway.
-    phys_rhs = rhs ( quad_num, phys_xy_T );
-    phys_h = h_coef ( quad_num, phys_xy_T );    
+    %phys_rhs = rhs ( quad_num, phys_xy_T );
+    
+    % Pressure at the nodal points of the element.
+    pr_a(1:3) = pr(element_node(1:3,element));
+           
+    % Compute pressure at the Gauss point.
+    pr_gp = zeros(3, quad_num);
+    pr_gp(1:quad_num) = ...
+       pr_a(1) * ( 1.0 - quad_xy(1,1:quad_num) - quad_xy(2,1:quad_num) ) ...
+     + pr_a(2) *         quad_xy(1,1:quad_num) ...
+     + pr_a(3) *                          quad_xy(2,1:quad_num);
+    
     
 %
 %  Consider the QUAD-th quadrature point..
@@ -259,20 +272,22 @@ function [ a, f ] = assemble_poisson_sparse ( node_num, node_xyz, ...
 
         [ bi, dbidx, dbidy ] = basis_11_t3 ( t3_T(1:2,:), test, phys_xy_T(1:2,quad) );
 
-        f(i,1) = f(i,1) + w(quad,1) * phys_rhs(quad,1) * bi;
+        f(i,1) = f(i,1) + w(quad,1) * pr_gp(quad) * bi;
 %
 %  Consider the BASIS-th basis function, which is used to form the
 %  value of the solution function.
 %
+        % Assemble stiffness matrix K.
+        if(assemble_stiffness)
         for basis = 1 : 3
 
           j = element_node(basis,element);
 
           [ bj, dbjdx, dbjdy ] = basis_11_t3 ( t3_T(1:2,:), basis, phys_xy_T(1:2,quad) );
 
-          a(i,j) = a(i,j) + w(quad,1) * ( ...
-              phys_h(quad) * ( dbidx * dbjdx + dbidy * dbjdy ) );
+          a(i,j) = a(i,j) + w(quad,1) * ( stiffness * ( dbidx * dbjdx + dbidy * dbjdy ) );
 
+        end
         end
 
       end
@@ -367,7 +382,7 @@ function [ qi, dqidx, dqidy ] = basis_11_t3 ( t, i, p )
   return
 end
 function [ a, f ] = dirichlet_apply_sparse ( node_num, node_xyz, ...
-  node_condition, a, f )
+  node_condition, a, f)
 
 %*****************************************************************************80
 %
