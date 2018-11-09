@@ -1,4 +1,4 @@
-function [is_inside, p_BQ] = ray_to_box_inside(p_BRo, ray_B, lengths)
+function [is_inside, p_BQ, lambda] = ray_to_box_inside(p_BRo, ray_B, lengths)
 % p_BRo: ray start point Ro, expressed in the box frame.
 % ray_B: ray direction in the box frame.
 % The box frame B is defined to be such that [0; 0; 0] is at the geometric
@@ -9,6 +9,7 @@ function [is_inside, p_BQ] = ray_to_box_inside(p_BRo, ray_B, lengths)
 %       is false.
 
 p_BQ = [];
+lambda = [];
 is_inside = is_inside_box(lengths, p_BRo);
 if (~is_inside)
     return;
@@ -39,8 +40,8 @@ ipos = find(lambda_face > 0);
 lambda_pos = lambda_face(ipos);
 p_BQ_pos = p_BQ_face(:, ipos);
 
-
-[lambda_min, imin] = min(lambda_pos);
+% Now find the minimum positive (in the direction of the ray) distance.
+[lambda, imin] = min(lambda_pos);
 p_BQ = p_BQ_pos(:, imin);
 
 end
