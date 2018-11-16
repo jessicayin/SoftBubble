@@ -31,6 +31,7 @@ tic
 [normal0_W, K, Aeq, node_areas] = QP_membrane_solver_preproc(p_WP0, t, T0);
 toc
 
+X_WB = eye(4);
 for istep = 0:nsteps
     time = istep * dt;
 
