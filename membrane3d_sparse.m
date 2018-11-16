@@ -1,4 +1,4 @@
-function [K, F] = membrane3d_sparse(node_xyz, element_node, stiffness, pr, K, assemble_stiffness)
+function [K, F, node_boundary] = membrane3d_sparse(node_xyz, element_node, stiffness, u, pr, dpdu, K, assemble_stiffness, apply_bcs)
 % node_xyz has size num_nodes x 3.
 % element_node has size num_elements x 3.
 
@@ -8,29 +8,30 @@ function [K, F] = membrane3d_sparse(node_xyz, element_node, stiffness, pr, K, as
   node_xyz = node_xyz';
   [ dim_num, node_num ] = size ( node_xyz );
 
-  fprintf ( 1, '  Number of nodes =          %d\n', node_num );
+  %fprintf ( 1, '  Number of nodes =          %d\n', node_num );
 
-  r8mat_transpose_print_some ( dim_num, node_num, node_xyz, 1, 1, 3, 10, ...
-    '  First 10 nodes' );
+  %r8mat_transpose_print_some ( dim_num, node_num, node_xyz, 1, 1, 3, 10, ...
+  %  '  First 10 nodes' );
 
   element_node = element_node';
   [ element_order, element_num ] = size ( element_node );
 
-  fprintf ( 1, '\n' );
-  fprintf ( 1, '  Element order =            %d\n', element_order );
-  fprintf ( 1, '  Number of elements =       %d\n', element_num );
+  %fprintf ( 1, '\n' );
+  %fprintf ( 1, '  Element order =            %d\n', element_order );
+  %fprintf ( 1, '  Number of elements =       %d\n', element_num );
 
-  i4mat_transpose_print_some ( 3, element_num, ...
-    element_node, 1, 1, 3, 10, '  First 10 elements' );
+  %i4mat_transpose_print_some ( 3, element_num, ...
+  %  element_node, 1, 1, 3, 10, '  First 10 elements' );
 
-  fprintf ( 1, '\n' );
-  fprintf ( 1, '  Quadrature order =          %d\n', quad_num );
+  %fprintf ( 1, '\n' );
+  %fprintf ( 1, '  Quadrature order =          %d\n', quad_num );
 %
 %  Determine which nodes are boundary nodes and which have a
 %  finite element unknown.  Then set the boundary values.
 %
   node_boundary = triangulation_order3_boundary_node ( node_num, ...
     element_num, element_node );
+
 %
 %  Determine the node conditions.
 %  For now, we'll just assume all boundary nodes are Dirichlet.
@@ -54,14 +55,14 @@ function [K, F] = membrane3d_sparse(node_xyz, element_node, stiffness, pr, K, as
   [ nz_num, adj_col ] = triangulation_order3_adj_count ( node_num, ...
     element_num, element_node, element_neighbor );
 
-  fprintf ( 1, '\n' );
-  fprintf ( 1, '  TRIANGULATION_ORDER3_ADJ_COUNT returns NZ_NUM = %d\n', ...
-    nz_num );
+  %fprintf ( 1, '\n' );
+  %fprintf ( 1, '  TRIANGULATION_ORDER3_ADJ_COUNT returns NZ_NUM = %d\n', ...
+  %  nz_num );
 %
 %  Assemble the finite element coefficient matrix A and the right-hand side F.
 %
   [ a, f ] = assemble_poisson_sparse ( node_num, node_xyz, ...
-    element_num, element_node, quad_num, nz_num, stiffness, pr, K, assemble_stiffness);
+    element_num, element_node, quad_num, nz_num, stiffness, u, pr, dpdu, K, assemble_stiffness);
 
   if ( debugging )
 
@@ -76,7 +77,10 @@ function [K, F] = membrane3d_sparse(node_xyz, element_node, stiffness, pr, K, as
 %
 %  Adjust the linear system to account for Dirichlet boundary conditions.
 %
-  [ a, f ] = dirichlet_apply_sparse ( node_num, node_xyz, node_condition, a, f);
+  %In case we need the original matrix for a symmetric QP.
+  if (apply_bcs)
+    [ a, f ] = dirichlet_apply_sparse ( node_num, node_xyz, node_condition, a, f);
+  end
 
   if ( debugging )
 
@@ -111,7 +115,7 @@ function [K, F] = membrane3d_sparse(node_xyz, element_node, stiffness, pr, K, as
   return
 end
 function [ a, f ] = assemble_poisson_sparse ( node_num, node_xyz, ...
-  element_num, element_node, quad_num, nz_num, stiffness, pr, K, assemble_stiffness)
+  element_num, element_node, quad_num, nz_num, stiffness, u, pr, dpdu, K, assemble_stiffness)
 
 %*****************************************************************************80
 %
@@ -168,9 +172,9 @@ function [ a, f ] = assemble_poisson_sparse ( node_num, node_xyz, ...
 %
   f(1:node_num,1) = 0.0;
 
-  fprintf ( 1, '\n' );
-  fprintf ( 1, 'ASSEMBLE_POISSON_SPARSE:\n' );
-  fprintf ( 1, '  Setting up sparse Poisson matrix with NZ_NUM = %d\n', nz_num );
+  %fprintf ( 1, '\n' );
+  %fprintf ( 1, 'ASSEMBLE_POISSON_SPARSE:\n' );
+  %fprintf ( 1, '  Setting up sparse Poisson matrix with NZ_NUM = %d\n', nz_num );
 
   if(assemble_stiffness)
     a = sparse ( [], [], [], node_num, node_num, nz_num );
@@ -246,15 +250,31 @@ function [ a, f ] = assemble_poisson_sparse ( node_num, node_xyz, ...
     %phys_rhs = rhs ( quad_num, phys_xy_T );
     
     % Pressure at the nodal points of the element.
-    pr_a(1:3) = pr(element_node(1:3,element));
+    pr_a = pr(element_node(1:3,element));
            
-    % Compute pressure at the Gauss point.
-    pr_gp = zeros(3, quad_num);
-    pr_gp(1:quad_num) = ...
-       pr_a(1) * ( 1.0 - quad_xy(1,1:quad_num) - quad_xy(2,1:quad_num) ) ...
-     + pr_a(2) *         quad_xy(1,1:quad_num) ...
-     + pr_a(3) *                          quad_xy(2,1:quad_num);
+    % Convenience quadrature mapping from nodal values to Gauss points
+    % values.
+    quad_map = [
+        (1.0 - quad_xy(1,1:quad_num) - quad_xy(2,1:quad_num) )',...
+        quad_xy(1,1:quad_num)',...
+        quad_xy(2,1:quad_num)'];
     
+    
+    % Compute pressure at the Gauss point.
+    pr_gp = quad_map * pr_a;
+    
+    %pr_gp = zeros(3, quad_num);
+    %pr_gp(1:quad_num) = ...
+    %   pr_a(1) * ( 1.0 - quad_xy(1,1:quad_num) - quad_xy(2,1:quad_num) ) ...
+    % + pr_a(2) *         quad_xy(1,1:quad_num) ...
+    % + pr_a(3) *                          quad_xy(2,1:quad_num);
+    
+    % Pressure gradient at Gauss points.
+    dpdu_a = dpdu(element_node(1:3,element));
+    dpdu_gp = quad_map * dpdu_a;    
+    
+    % Deformation at nodal points.
+    u_a = u(element_node(1:3,element));
     
 %
 %  Consider the QUAD-th quadrature point..
@@ -271,8 +291,41 @@ function [ a, f ] = assemble_poisson_sparse ( node_num, node_xyz, ...
         i = element_node(test,element);
 
         [ bi, dbidx, dbidy ] = basis_11_t3 ( t3_T(1:2,:), test, phys_xy_T(1:2,quad) );
+        
+        % Gradient of u at Gauss point.
+        dudx_gp = 0;
+        dudy_gp = 0;
+        
+        for basis = 1 : 3
 
+          j = element_node(basis,element);
+
+          [ bj, dbjdx, dbjdy ] = basis_11_t3 ( t3_T(1:2,:), basis, phys_xy_T(1:2,quad) ); 
+          
+           % Compute gradient of u.
+           dudx_gp = dudx_gp + u_a(basis) * dbjdx;
+           dudy_gp = dudy_gp + u_a(basis) * dbjdy;
+          
+          if(assemble_stiffness)
+              % 1) Pressure term which, when linearized, ends up in a mass
+              % matrix term.
+              a(i,j) = a(i,j) - w(quad,1) * dpdu_gp(quad) * bi * bj;  
+              
+          
+              % 2) Laplacian term.
+              a(i,j) = a(i,j) + w(quad,1) * ( stiffness * ( dbidx * dbjdx + dbidy * dbjdy ) );
+          end
+
+        end
+        
+        
+        % 1) Presure term.
         f(i,1) = f(i,1) + w(quad,1) * pr_gp(quad) * bi;
+        
+        % 2) Laplacian of u.
+        f(i,1) = f(i,1) - w(quad,1) * stiffness * (dbidx * dudx_gp + dbidy * dudy_gp);
+        
+        
 %
 %  Consider the BASIS-th basis function, which is used to form the
 %  value of the solution function.

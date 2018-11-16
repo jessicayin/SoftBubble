@@ -1,0 +1,80 @@
+What you'll find here:
+======================
+
+* doall_QP_membrane_solver.m:
+This is an example solver that moves a cube in front of the bubble and computes
+the bubble's deformations.
+You can change the imposed motions of the cube by modifying box_pose.m.
+This is a great entry point to find out what's in this directory.
+
+* box_pose.m: This file defines a method for the imposed motions in
+doall_QP_membrane_solver.m.
+
+
+Solver internals:
+=================
+
+* QP_membrane_solver_preproc:
+Given the initial mesh and membrane tension T0, this preprocessing method
+computes all quantities in the problem that are constant through the solution
+process:
+ - initial (node) mesh normals (area weighted).
+ - Stiffness matrix K.
+ - Aeq: Equality constraint matrix. It includes boundary conditions and
+        (linearized) volume constraint. (Constraint is Aeq * u = 0).
+ - node_areas: the area of each node when compute area weighted normals. This is
+   computed by assembling the area of incident triangles to a node, only a third
+   is assigned to each node.
+
+* QP_membrane_solver:
+Given the precomputed quantities by QP_membrane_solver_preproc plus the
+definition of the box and its pose, this method computes displacement u and
+returns the updated mesh positions p_WP = p_WP0 + u * normalP0_W.
+
+Working with rigid transforms:
+==============================
+
+Utilities to create and operate 4x4 homogenous rigid transfor matrices.
+These include:
+- pose_inverse
+- transform_point
+- reexpress_vector
+- rotx, roty, rotz
+- MakeRpy
+- MakePose
+
+
+Utilities to read/write files:
+==============================
+
+* vtk_write_*: A set of utilities to write headers, unstructured meshes scalar
+and vector fields. See doall_QP_membrane_solver for examples of usage.
+
+* read_obj: reads an obj triangle mesh file.
+
+* write_obj: writes a triangle mesh to an obj file.
+
+Utilities to generate meshes:
+=============================
+
+You can use distmesh to make 2D meshes of circles and then rise them up to make
+spherical cap meshes. See rise_bubble.
+
+% Example: (Uniform Mesh on Unit Circle)
+    fd=@(p) sqrt(sum(p.^2,2))-1;
+    [p,t]=distmesh2d(fd,@huniform,0.2,[-1,-1;1,1],[]);
+
+From: https://popersson.github.io/distmesh/
+
+- rise_bubble: Makes a mesh for a spherical cap given the mesh for a planar
+  circle mesh.
+- calc_area_weighted_normals
+
+
+Basic geometry queries:
+=======================
+
+- ray_to_plane
+- is_inside_box: is point inside box.
+- ray_to_box_inside: Ray cast from a given point only if point is insde.
+  Empty result if point is outside.

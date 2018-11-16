@@ -8,23 +8,23 @@ function [normal, M, Fn] = calc_node_normals(node_xyz, element_node)
   node_xyz = node_xyz';
   [ dim_num, node_num ] = size ( node_xyz );
 
-  fprintf ( 1, '  Number of nodes =          %d\n', node_num );
+  %fprintf ( 1, '  Number of nodes =          %d\n', node_num );
 
-  r8mat_transpose_print_some ( dim_num, node_num, node_xyz, 1, 1, 3, 10, ...
-    '  First 10 nodes' );
+  %r8mat_transpose_print_some ( dim_num, node_num, node_xyz, 1, 1, 3, 10, ...
+  %  '  First 10 nodes' );
 
   element_node = element_node';
   [ element_order, element_num ] = size ( element_node );
 
-  fprintf ( 1, '\n' );
-  fprintf ( 1, '  Element order =            %d\n', element_order );
-  fprintf ( 1, '  Number of elements =       %d\n', element_num );
+  %fprintf ( 1, '\n' );
+  %fprintf ( 1, '  Element order =            %d\n', element_order );
+  %fprintf ( 1, '  Number of elements =       %d\n', element_num );
 
-  i4mat_transpose_print_some ( 3, element_num, ...
-    element_node, 1, 1, 3, 10, '  First 10 elements' );
+  %i4mat_transpose_print_some ( 3, element_num, ...
+  %  element_node, 1, 1, 3, 10, '  First 10 elements' );
 
-  fprintf ( 1, '\n' );
-  fprintf ( 1, '  Quadrature order =          %d\n', quad_num );
+  %fprintf ( 1, '\n' );
+  %fprintf ( 1, '  Quadrature order =          %d\n', quad_num );
 %
 %  Determine which nodes are boundary nodes and which have a
 %  finite element unknown.  Then set the boundary values.
@@ -54,9 +54,9 @@ function [normal, M, Fn] = calc_node_normals(node_xyz, element_node)
   [ nz_num, adj_col ] = triangulation_order3_adj_count ( node_num, ...
     element_num, element_node, element_neighbor );
 
-  fprintf ( 1, '\n' );
-  fprintf ( 1, '  TRIANGULATION_ORDER3_ADJ_COUNT returns NZ_NUM = %d\n', ...
-    nz_num );
+  %fprintf ( 1, '\n' );
+  %fprintf ( 1, '  TRIANGULATION_ORDER3_ADJ_COUNT returns NZ_NUM = %d\n', ...
+  %  nz_num );
 %
 %  Assemble the finite element coefficient matrix A and the right-hand side F.
 %
@@ -73,8 +73,8 @@ function [normal, M, Fn] = calc_node_normals(node_xyz, element_node)
   %node_r = residual_poisson ( node_num, node_xyz, node_condition, ...
   %  element_num, element_node, quad_num, a, f, node_u );
 
-  fprintf ( 1, '\n' );
-  fprintf ( 1, '  Maximum absolute residual = %f\n', res);
+  %fprintf ( 1, '\n' );
+  %fprintf ( 1, '  Maximum absolute residual = %f\n', res);
 
   M = a;
   Fn = f;
@@ -139,9 +139,9 @@ function [ a, f ] = assemble_poisson_sparse ( node_num, node_xyz, ...
 %
   f(1:node_num,3) = 0.0;
 
-  fprintf ( 1, '\n' );
-  fprintf ( 1, 'ASSEMBLE_POISSON_SPARSE:\n' );
-  fprintf ( 1, '  Setting up sparse Poisson matrix with NZ_NUM = %d\n', nz_num );
+  %fprintf ( 1, '\n' );
+  %fprintf ( 1, 'ASSEMBLE_POISSON_SPARSE:\n' );
+  %fprintf ( 1, '  Setting up sparse Poisson matrix with NZ_NUM = %d\n', nz_num );
 
   a = sparse ( [], [], [], node_num, node_num, nz_num );
 %
