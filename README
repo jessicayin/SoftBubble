@@ -10,6 +10,9 @@ This is a great entry point to find out what's in this directory.
 * box_pose.m: This file defines a method for the imposed motions in
 doall_QP_membrane_solver.m.
 
+* doall_generate_point_cloud_demo.m:
+a demo showing how to generate point cloud data for the bubble using a picoflex
+camera model.
 
 Solver internals:
 =================
