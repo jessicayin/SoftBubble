@@ -1,6 +1,9 @@
 % Position of the picoflex camera frame C in the bubble frame B.
 p_BC = [0, 0, -0.112];  % Review this number from Alex's latest drawings.
 
+sigma_percent = 0.01;
+sigma_dist = sigma_percent * 0.15; % distances are around 15 cm.
+
 % Bubble surface mesh file.
 bubble_mesh_path = 'bubble_R1p0_h0p5.obj';
 
@@ -33,6 +36,15 @@ tree = opcodemesh(p_BP0', t'); % NOTE!: I am using the transpose!
 % tree.update(p_BP);
 [does_hit, dist, tri_index, bar_coos, p_BY] = tree.intersect(p_BC_list, rhat_C');
 p_BY = p_BY';
+
+% Add noise.
+%dist_noise = normrnd(0.0, sigma_dist, nr, 1); % You need a toolbox for
+%this! agghhh!
+dd = zeros(nr, 1);
+for ir = 1:nr
+    dd(ir) = generate_gaussian_samples(0.0, sigma_dist);
+   p_BY(ir, :) = p_BY(ir, :) + dd(ir) * rhat_C(ir, :);
+end
 
 % Compute point cloud on original mesh.
 %[p_BY, dist] = ray_to_mesh(p_BP0, t, p_BC, rhat_C);
