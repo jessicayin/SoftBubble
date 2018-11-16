@@ -23,10 +23,21 @@ toc
 
 % Camera rays. Notice that ray_C = ray_B since B and C are aligned.
 rhat_C = generate_picoflex_rays();
+nr = size(rhat_C, 1);
+p_BC_list = repmat(p_BC', 1, nr);  % As needed by OPCODE
+
+% Generate AABB tree for the mesh.
+addpath('../opcodemesh/matlab'); % Make OPCODE lib available.
+tree = opcodemesh(p_BP0', t'); % NOTE!: I am using the transpose!
+% If I really needed to update mesh on the fly I could with
+% tree.update(p_BP);
+[does_hit, dist, tri_index, bar_coos, p_BY] = tree.intersect(p_BC_list, rhat_C');
+p_BY = p_BY';
 
 % Compute point cloud on original mesh.
-[p_BY, dist] = ray_to_mesh(p_BP0, t, p_BC, rhat_C);
+%[p_BY, dist] = ray_to_mesh(p_BP0, t, p_BC, rhat_C);
 % Add extra point for camera center Co.
+
 p_BY = [p_BY; p_BC];
 dist = [dist; 0];
 

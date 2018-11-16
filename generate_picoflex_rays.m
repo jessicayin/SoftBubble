@@ -9,8 +9,8 @@ function rhat_C = generate_picoflex_rays()
 nh = 224;  % pixels in horizontal direction.
 nv = 171;  % pixels in vertical direction.
 
-nh = 17;
-nv = 9;
+%nh = 17;
+%nv = 9;
 
 fov_h = 62 * pi / 180;  % Horizontal FOV, rads.
 fov_v = 45 * pi / 180;  % Vertical FOV, rads.
