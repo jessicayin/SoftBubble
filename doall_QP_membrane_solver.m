@@ -45,9 +45,8 @@ tic
     box_size, X_WB);
 toc
 
-% Not computed or used yet.
-pr = zeros(size(u));
-dpdu = zeros(size(u));
+F = K * u; % rhs.
+pr = F ./ node_areas; % Actually F = M * p, with M the mass matrix.
 
 sprintf('Writing output files...')
 tic

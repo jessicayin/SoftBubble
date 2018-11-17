@@ -14,6 +14,10 @@ doall_QP_membrane_solver.m.
 a demo showing how to generate point cloud data for the bubble using a picoflex
 camera model.
 
+* doall_generate_solution_and_point_cloud.m:
+Given a pose X_BO of the object in the bubble frame B, this script computes
+the bubble deformation and sinthetizes a point cloud with Gaussian noise.
+
 Solver internals:
 =================
 
