@@ -47,6 +47,11 @@ toc
 F = K * u; % rhs.
 pr = F ./ node_areas; % Actually F = M * p, with M the mass matrix.
 
+% Estimate mean curvature from Lapace's equation: Δp = 2⋅T0⋅H.
+% WARNING: This is not quite the curvature, since when u = 0 then H = 0
+% which is not true.
+H = pr/T0/2;
+
 sprintf('Writing output files...')
 tic
 
@@ -101,7 +106,9 @@ fid = fopen(deformed_file, 'w');
 vtk_write_header(fid, 'bubble_deformed');
 vtk_write_unstructured_grid(fid, p_BP, t);
 vtk_write_point_data_header(fid, p_BP);
+vtk_write_scalar_data(fid, 'Displacement', u);
 vtk_write_scalar_data(fid, 'Pressure', pr);
+vtk_write_scalar_data(fid, 'MeanCurvature', H);
 fclose(fid);
 
 file = sprintf('point_cloud.vtk');
