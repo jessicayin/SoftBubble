@@ -1,4 +1,4 @@
-function [normal0_W, K, Aeq, node_areas] = QP_membrane_solver_preproc(p_WP0, t, T0)
+function [normal0_W, K, Aeq, node_areas, node_boundary] = QP_membrane_solver_preproc(p_WP0, t, T0)
 
 % Compute normals at the nodes.
 [normal0_W, node_areas] = calc_area_weighted_normals(p_WP0, t);

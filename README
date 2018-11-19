@@ -17,6 +17,12 @@ camera model.
 * doall_generate_solution_and_point_cloud.m:
 Given a pose X_BO of the object in the bubble frame B, this script computes
 the bubble deformation and sinthetizes a point cloud with Gaussian noise.
+It also FITS a mesh to the point cloud using a least squares procedure!!.
+
+* fit_mesh_to_point_cloud.m:
+this method takes a point cloud and an initial mesh. It finds a least squres
+fit mesh to the point cloud using a procedure similar to the one in
+Sorkine and Cohen-Or (2004) though with an actual deformation Laplacian.
 
 Solver internals:
 =================

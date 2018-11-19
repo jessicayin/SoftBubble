@@ -33,7 +33,7 @@ toc
 sprintf('Precomputing normals, stiffness matrix and equality matrix...')
 tic
 % Pre-compute quantities that do not change.
-[normal0_W, K, Aeq, node_areas] = QP_membrane_solver_preproc(p_BP0, t, T0);
+[normal0_W, K, Aeq, node_areas, node_boundary] = QP_membrane_solver_preproc(p_BP0, t, T0);
 toc
 
 sprintf('Setting up and solving QP...')
@@ -52,11 +52,12 @@ pr = F ./ node_areas; % Actually F = M * p, with M the mass matrix.
 % which is not true.
 H = pr/T0/2;
 
-sprintf('Writing output files...')
-tic
+
 
 % =========================================================================
 % =========================================================================
+sprintf('Generating point cloud...')
+tic
 
 % Camera rays. Notice that ray_C = ray_B since B and C are aligned.
 rhat_C = generate_picoflex_rays();
@@ -80,8 +81,26 @@ for ir = 1:nr
    p_BY(ir, :) = p_BY(ir, :) + dd(ir) * rhat_C(ir, :);
 end
 
+toc
+
 % =========================================================================
+% FIT MESH TO POINT CLOUD.
 % =========================================================================
+sprintf('Fitting mesh...')
+tic
+
+npoints = size(p_BP0, 1);
+L_weigth = 5.0;
+p_BPfit = fit_mesh_to_point_cloud(p_BP0, t, node_boundary, p_BY, tri_index, bar_coos, L_weigth, K/(T0*2));
+
+toc
+
+
+% =========================================================================
+% OUTPUT SOLUTION.
+% =========================================================================
+sprintf('Writing output files...')
+tic
 
 box_file = sprintf('box.vtk');
 %write_box(box_file, box_size, X_WB)
@@ -118,5 +137,13 @@ vtk_write_scattered_points(fid, p_BY);
 vtk_write_point_data_header(fid, p_BY);
 vtk_write_scalar_data(fid, 'Distance', dist);
 fclose(fid);
+
+deformed_file = sprintf('bubble_fit.vtk');
+fid = fopen(deformed_file, 'w');
+vtk_write_header(fid, 'bubble_fit');
+vtk_write_unstructured_grid(fid, p_BPfit, t);
+vtk_write_point_data_header(fid, p_BPfit);
+fclose(fid);
+
 toc
 
