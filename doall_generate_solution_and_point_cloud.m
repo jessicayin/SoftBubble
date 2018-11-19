@@ -32,25 +32,14 @@ toc
 
 sprintf('Precomputing normals, stiffness matrix and equality matrix...')
 tic
-% Pre-compute quantities that do not change.
-[normal0_W, K, Aeq, node_areas, node_boundary] = QP_membrane_solver_preproc(p_BP0, t, T0);
+bubble = BubbleModel(p_BP0, t, T0);
 toc
 
 sprintf('Setting up and solving QP...')
 tic
-[u, p_BP] = QP_membrane_solver(...
-    p_BP0, t, T0, ...
-    normal0_W, K, Aeq, ...
-    box_size, X_BO);
+[phi0, H] = shoot_mesh_to_box(p_BP0, bubble.normal0_B, box_size, X_BO);
+[u, pr, p_BP, Hmean] = bubble.ComputeSolution(phi0, H);
 toc
-
-F = K * u; % rhs.
-pr = F ./ node_areas; % Actually F = M * p, with M the mass matrix.
-
-% Estimate mean curvature from Lapace's equation: Δp = 2⋅T0⋅H.
-% WARNING: This is not quite the curvature, since when u = 0 then H = 0
-% which is not true.
-H = pr/T0/2;
 
 
 
@@ -74,7 +63,7 @@ tic
 
 npoints = size(p_BP0, 1);
 L_weigth = 5.0;
-p_BPfit = fit_mesh_to_point_cloud(p_BP0, t, node_boundary, p_BY, tri_index, bar_coos, L_weigth, K/(T0*2));
+p_BPfit = fit_mesh_to_point_cloud(p_BP0, t, bubble.node_boundary, p_BY, tri_index, bar_coos, L_weigth, bubble.K/(T0*2));
 
 toc
 
@@ -100,7 +89,7 @@ vtk_write_unstructured_grid(fid, p_BP0, t);
 vtk_write_point_data_header(fid, p_BP0);
 vtk_write_scalar_data(fid, 'Displacement', u);
 vtk_write_scalar_data(fid, 'Pressure', pr);
-vtk_write_vector_data(fid, 'Normal', normal0_W);
+vtk_write_vector_data(fid, 'Normal', bubble.normal0_B);
 fclose(fid);
 
 deformed_file = sprintf('bubble_deformed.vtk');
@@ -110,7 +99,7 @@ vtk_write_unstructured_grid(fid, p_BP, t);
 vtk_write_point_data_header(fid, p_BP);
 vtk_write_scalar_data(fid, 'Displacement', u);
 vtk_write_scalar_data(fid, 'Pressure', pr);
-vtk_write_scalar_data(fid, 'MeanCurvature', H);
+vtk_write_scalar_data(fid, 'MeanCurvature', Hmean);
 fclose(fid);
 
 file = sprintf('point_cloud.vtk');

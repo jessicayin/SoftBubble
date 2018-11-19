@@ -1,12 +1,10 @@
 function [u, p_WP] = QP_membrane_solver(...
     p_WP0, t, T0, ...
     normal0_W, K, Aeq, ...
-    box_size, X_WB)
+    phi0, H)
 
 % Assemble stiffness matrix and rhs.
 nnodes = size(p_WP0, 1);
-
-[phi0, H] = shoot_mesh_to_box(p_WP0, normal0_W, box_size, X_WB);
 
 % Set QP as
 % min 0.5 u*K*u
