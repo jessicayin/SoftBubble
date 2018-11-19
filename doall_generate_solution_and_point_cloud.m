@@ -56,31 +56,14 @@ H = pr/T0/2;
 
 % =========================================================================
 % =========================================================================
+sprintf('Constructing camera...')
+tic
+camera = PicoFlexCamera(p_BC, p_BP0, t);
+toc
+
 sprintf('Generating point cloud...')
 tic
-
-% Camera rays. Notice that ray_C = ray_B since B and C are aligned.
-rhat_C = generate_picoflex_rays();
-nr = size(rhat_C, 1);
-p_BC_list = repmat(p_BC', 1, nr);  % As needed by OPCODE
-
-% Generate AABB tree for the mesh.
-addpath('../opcodemesh/matlab'); % Make OPCODE lib available.
-tree = opcodemesh(p_BP0', t'); % NOTE!: I am using the transpose!
-% If I really needed to update mesh on the fly I could with
-tree.update(p_BP');
-[does_hit, dist, tri_index, bar_coos, p_BY] = tree.intersect(p_BC_list, rhat_C');
-p_BY = p_BY';
-
-% Add noise.
-%dist_noise = normrnd(0.0, sigma_dist, nr, 1); % You need a toolbox for
-%this! agghhh!
-dd = zeros(nr, 1);
-for ir = 1:nr
-    dd(ir) = generate_gaussian_samples(0.0, sigma_dist);
-   p_BY(ir, :) = p_BY(ir, :) + dd(ir) * rhat_C(ir, :);
-end
-
+[does_hit, dist, tri_index, bar_coos, p_BY] = camera.GeneratePointCloud(p_BP, sigma_dist);
 toc
 
 % =========================================================================
