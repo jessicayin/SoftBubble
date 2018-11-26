@@ -1,3 +1,7 @@
+% Ficticious time step.
+dt = 0.1;
+nsteps = 50;
+
 % Rigid box sizes.
 box_size = [1 1 1] * 0.05;
 
@@ -53,21 +57,15 @@ p_BP0 = p_BP0 * D / 2;
 toc
 
 % =========================================================================
-% Build and solve bubble model.
+% Build bubble model.
 % =========================================================================
 sprintf('Precomputing normals, stiffness matrix and equality matrix...')
 tic
 bubble = BubbleModel(p_BP0, tris, T0, V0, p0);
 toc
 
-sprintf('Setting up and solving QP...')
-tic
-[phi0, H, Hj] = shoot_mesh_to_box(p_BP0, bubble.normal0_B, box_size, X_BO);
-[u, pc,  pv, p_BP, Hmean, lambda] = bubble.ComputeSolution(phi0, H, Hj);
-toc
-
 % =========================================================================
-% Create PicoFlex camera and generate point cloud.
+% Create PicoFlex camera.
 % TODO: move this to the fitter's constructor.
 % =========================================================================
 sprintf('Constructing camera...')
@@ -78,14 +76,6 @@ toc
 sprintf('Generating point cloud on undeformed bubble...')
 tic
 [does_hit0, dist0, ray_tri_index0, bar_coos0, p_BY0] = camera.GeneratePointCloud(p_BP0, 0.0);
-toc
-
-% =========================================================================
-% Generate point cloud on a deformed bubble.
-% =========================================================================
-sprintf('Generating point cloud on deformed bubble...')
-tic
-[does_hit, dist, ray_tri_index, bar_coos, p_BY] = camera.GeneratePointCloud(p_BP, sigma_dist);
 toc
 
 % =========================================================================
@@ -103,6 +93,47 @@ fitter = PointCloudFitter(...
                 bubble.K, bubble.node_areas, bubble.dVdu, dpdu, ...
                 sigma_dist, T0, a);
 
+toc
+
+X_BO = eye(4);
+rpy = [pi/4, pi/4, 0];
+% =========================================================================
+% Generate sequence of poses.
+% =========================================================================
+X_BO_sequence = zeros(4, 4, 2 * nsteps + 1);
+for istep = 0:nsteps
+    time = istep * dt;%
+
+   [X_BO, rpy] = box_pose(time, dt, X_BO, rpy);
+   X_BO_sequence(:, :, istep+1) = X_BO;
+end
+% and backwards.
+for istep = nsteps:(2*nsteps-1)
+    iback = 2*nsteps - istep;
+    X_BO_sequence(:, :, istep+1) = X_BO_sequence(:, :, iback);
+end
+
+for istep = 0:2*nsteps
+    time = istep * dt;
+
+    X_BO = X_BO_sequence(:, :, istep+1);
+    %[X_BO, rpy] = box_pose(time, dt, X_BO, rpy);
+
+% =========================================================================
+% Solve bubble model.
+% =========================================================================
+sprintf('Setting up and solving QP...')
+tic
+[phi0, H, Hj] = shoot_mesh_to_box(p_BP0, bubble.normal0_B, box_size, X_BO);
+[u, pc,  pv, p_BP, Hmean, lambda] = bubble.ComputeSolution(phi0, H, Hj);
+toc
+
+% =========================================================================
+% Generate point cloud on a deformed bubble.
+% =========================================================================
+sprintf('Generating point cloud on deformed bubble...')
+tic
+[does_hit, dist, ray_tri_index, bar_coos, p_BY] = camera.GeneratePointCloud(p_BP, sigma_dist);
 toc
 
 % =========================================================================
@@ -125,7 +156,7 @@ pcray = fitter.InterpolateOnPointCloud(pcfit);
 sprintf('Writing output files...')
 tic
 
-box_file = sprintf('box.vtk');
+box_file = sprintf('box_%03d.vtk', istep);
 %write_box(box_file, box_size, X_WB)
 [box_points, box_tris] = generate_box(box_size, X_BO);
 fid = fopen(box_file, 'w');
@@ -133,7 +164,7 @@ vtk_write_header(fid, 'box');
 vtk_write_unstructured_grid(fid, box_points, box_tris);
 fclose(fid);
 
-file = sprintf('bubble_sim.vtk');
+file = sprintf('bubble_sim_%03d.vtk', istep);
 fid = fopen(file, 'w');
 vtk_write_header(fid, 'bubble_sim');
 vtk_write_unstructured_grid(fid, p_BP, tris);
@@ -143,7 +174,7 @@ vtk_write_scalar_data(fid, 'Pressure', pc);
 vtk_write_scalar_data(fid, 'MeanCurvature', Hmean);
 fclose(fid);
 
-file = sprintf('point_cloud.vtk');
+file = sprintf('point_cloud_%03d.vtk', istep);
 fid = fopen(file, 'w');
 vtk_write_header(fid, 'point_cloud');
 vtk_write_scattered_points(fid, p_BY);
@@ -152,7 +183,7 @@ vtk_write_scalar_data(fid, 'Distance', dist);
 vtk_write_scalar_data(fid, 'ContactPressure', pcray);
 fclose(fid);
 
-file = sprintf('bubble_fit.vtk');
+file = sprintf('bubble_fit_%03d.vtk', istep);
 fid = fopen(file, 'w');
 vtk_write_header(fid, 'bubble_fit');
 vtk_write_unstructured_grid(fid, p_BPfit, tris);
@@ -163,7 +194,7 @@ fclose(fid);
 
 toc
 
-
+end
 
 
 

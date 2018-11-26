@@ -24,6 +24,15 @@ this method takes a point cloud and an initial mesh. It finds a least squres
 fit mesh to the point cloud using a procedure similar to the one in
 Sorkine and Cohen-Or (2004) though with an actual deformation Laplacian.
 
+* doall_constrained_LSQ_demo.m:
+In this demo we:
+1) Simulate the bubble's deformations given the pose of the box.
+2) Simulate the point cloud given the bubble's deformations.
+3) Solve for inverse problem which consists in finding the contact
+   forces that cause deformations that best fit the point cloud.
+4) Use the contact pressure interpolated onto the point cloud as a
+   threshold to identify which points belong to the contact patch only.
+
 Solver internals:
 =================
 
