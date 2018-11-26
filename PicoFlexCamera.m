@@ -1,19 +1,11 @@
 classdef PicoFlexCamera
     properties
-        rhat_C;  % Camera rays's directions.
+        rhat_C;  % Camera rays's directions. nrays x 3.
         nr;  % Total number of rays (pixels). = size(1, rhat_C).
         p_BC_list; % = repmat(p_BC', 1, nr);  % As needed by OPCODE
         
         p_BC;
         tree;
-    end
-    
-    properties (Constant)
-        nh = 224;  % pixels in horizontal direction.
-        nv = 171;  % pixels in vertical direction.
-        fov_h = 62 * pi / 180;  % Horizontal FOV, rads.
-        fov_v = 45 * pi / 180;  % Vertical FOV, rads.
-        
     end
     
     methods
@@ -39,6 +31,10 @@ classdef PicoFlexCamera
             [does_hit, dist, tri_index, bar_coos, p_BY] = ...
                 this.tree.intersect(this.p_BC_list, this.rhat_C');
             p_BY = p_BY';
+            % Apparently OPCODE uses single precision. We convert to double
+            % since when multiplying by sparse matrices Matlab needs the
+            % type to be "double".
+            dist = double(dist); 
 
             % Add noise.
             %dist_noise = normrnd(0.0, sigma_dist, nr, 1); % You need a toolbox for
