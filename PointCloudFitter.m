@@ -1,6 +1,7 @@
 classdef PointCloudFitter
     properties
         D;  % d = D * u + d0.
+        S;  % Shape function matrix.
         d0;
         Hu; % Hu = D' * D; of size nu x nu, with nu = length(nu);
         % We minimize:
@@ -48,6 +49,7 @@ classdef PointCloudFitter
             ii = zeros(3*nrays, 1);
             jj = zeros(3*nrays, 1);
             vv = zeros(3*nrays, 1);
+            Sv = zeros(3*nrays, 1);  % Shape function matrix.
             
             for iray = 1:nrays
                 % Triangle index of the triangle hit by the ray.
@@ -70,12 +72,14 @@ classdef PointCloudFitter
                 ii(ivalue) = [iray, iray, iray];
                 jj(ivalue) = tri;
                 vv(ivalue) = normal_dot_ray * Siray;
+                Sv(ivalue) = Siray;
             end
             
             % This is the factor when u is dimensionless.
             this.cost_factor = 1/nrays * (a/sigma_dist)^2;
             
             this.D = sparse(ii, jj, vv, nrays, npoints, 3*nrays);
+            this.S = sparse(ii, jj, Sv, nrays, npoints, 3*nrays);
             this.d0 = d0/a;
             %normalize with the standard deviation and number of rays.
             this.Hu = this.D' * this.D * this.cost_factor;
@@ -195,6 +199,12 @@ classdef PointCloudFitter
             fl = fu' * u * this.cost_factor;
             
             f = fq + fl;
+        end
+
+        function ui = InterpolateOnPointCloud(this, u)
+            % u: quantity to be interpolated. Of size npoints.
+            % ui: interplated quantity. Of size nrays.
+            ui = this.S * u;
         end
         
     

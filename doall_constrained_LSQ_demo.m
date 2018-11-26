@@ -113,6 +113,11 @@ tic
 [ufit, pcfit, pvfit, p_BPfit] = fitter.FitPointCloud(dist);
 toc
 
+% =========================================================================
+% Interpolate pressure values onto the point cloud for masking.
+% =========================================================================
+pcray = fitter.InterpolateOnPointCloud(pcfit);
+
 
 % =========================================================================
 % OUTPUT SOLUTION.
@@ -144,6 +149,7 @@ vtk_write_header(fid, 'point_cloud');
 vtk_write_scattered_points(fid, p_BY);
 vtk_write_point_data_header(fid, p_BY);
 vtk_write_scalar_data(fid, 'Distance', dist);
+vtk_write_scalar_data(fid, 'ContactPressure', pcray);
 fclose(fid);
 
 file = sprintf('bubble_fit.vtk');
