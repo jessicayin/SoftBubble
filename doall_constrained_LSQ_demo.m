@@ -14,6 +14,9 @@ X_BO = MakePose(R_BO, p_BO);
 % Bubble surface mesh file.
 bubble_mesh_path = 'bubble_R1p0_h0p5.obj';
 
+% Object surface mesh file.
+object_mesh_path = 'models/bridge_1.obj';
+
 % Position of the picoflex camera frame C in the bubble frame B.
 p_BC = [0, 0, -0.112];  % Review this number from Alex's latest drawings.
 
@@ -95,8 +98,22 @@ fitter = PointCloudFitter(...
 
 toc
 
+% =========================================================================
+% Create model for the object.
+% =========================================================================
+tic
+sprintf('Loading object...')
+
+[p_OP, object_tris]=read_obj(object_mesh_path);
+p_OP = p_OP / 1000; % mm to m.
+
+addpath('../opcodemesh/matlab'); % Make OPCODE lib available.
+object_tree = opcodemesh(p_OP', object_tris'); % NOTE!: I am using the transpose!
+toc
+
+
 X_BO = eye(4);
-rpy = [pi/4, pi/4, 0];
+rpy = [pi + pi/4, pi/4, 0];
 % =========================================================================
 % Generate sequence of poses.
 % =========================================================================
@@ -113,7 +130,8 @@ for istep = nsteps:(2*nsteps-1)
     X_BO_sequence(:, :, istep+1) = X_BO_sequence(:, :, iback);
 end
 
-for istep = 0:2*nsteps
+for istep = 0:(2*nsteps-1)
+%for istep = 0:0
     time = istep * dt;
 
     X_BO = X_BO_sequence(:, :, istep+1);
@@ -124,7 +142,10 @@ for istep = 0:2*nsteps
 % =========================================================================
 sprintf('Setting up and solving QP...')
 tic
-[phi0, H, Hj] = shoot_mesh_to_box(p_BP0, bubble.normal0_B, box_size, X_BO);
+%[phi0, H, Hj] = shoot_mesh_to_box(p_BP0, bubble.normal0_B, box_size, X_BO);
+
+[phi0, H, Hj] = shoot_rays_to_mesh(p_BP0, bubble.normal0_B, object_tree, X_BO);
+
 [u, pc,  pv, p_BP, Hmean, lambda] = bubble.ComputeSolution(phi0, H, Hj);
 toc
 
@@ -162,6 +183,16 @@ box_file = sprintf('box_%03d.vtk', istep);
 fid = fopen(box_file, 'w');
 vtk_write_header(fid, 'box');
 vtk_write_unstructured_grid(fid, box_points, box_tris);
+fclose(fid);
+
+p_BPobj = zeros(size(p_OP));
+for i=1:length(p_OP)
+    p_BPobj(i, :) = transform_point(X_BO, p_OP(i,:)');
+end
+file = sprintf('object_%03d.vtk', istep);
+fid = fopen(file, 'w');
+vtk_write_header(fid, 'object_mesh');
+vtk_write_unstructured_grid(fid, p_BPobj, object_tris);
 fclose(fid);
 
 file = sprintf('bubble_sim_%03d.vtk', istep);

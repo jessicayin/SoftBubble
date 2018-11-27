@@ -15,7 +15,7 @@ function [X_WB, rpy] = box_pose(time, dt, X_WB, rpy0)
     R_WB = MakeRpy(rpy);
     X_WB = MakePose(R_WB, p_WBo);
     elseif ( time < 2.0)                
-        vz = +0.03; % m/s
+        vz = +0.035; % m/s
         p_WB(3) = p_WB(3) + vz * dt;
         X_WB = MakePose(R_WB, p_WB);
     elseif (time < 3.0)
@@ -26,7 +26,7 @@ function [X_WB, rpy] = box_pose(time, dt, X_WB, rpy0)
         R_WB = MakeRpy(rpy);
         X_WB = MakePose(R_WB, p_WB);
     elseif (time < 4.0)
-        vz = -0.03; % m/s
+        vz = -0.035; % m/s
         p_WB(3) = p_WB(3) + vz * dt;
         X_WB = MakePose(R_WB, p_WB);
     elseif (time < 5.0)
