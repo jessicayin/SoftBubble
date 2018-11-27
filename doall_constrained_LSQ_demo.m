@@ -15,7 +15,8 @@ X_BO = MakePose(R_BO, p_BO);
 bubble_mesh_path = 'bubble_R1p0_h0p5.obj';
 
 % Object surface mesh file.
-object_mesh_path = 'models/bridge_1.obj';
+%object_mesh_path = 'models/bridge_1.obj';
+object_mesh_path = 'models/robot_block_40mm_1.obj';
 
 % Position of the picoflex camera frame C in the bubble frame B.
 p_BC = [0, 0, -0.112];  % Review this number from Alex's latest drawings.
@@ -131,6 +132,7 @@ for istep = nsteps:(2*nsteps-1)
 end
 
 for istep = 0:(2*nsteps-1)
+%for istep = nsteps:nsteps
 %for istep = 0:0
     time = istep * dt;
 
@@ -201,7 +203,7 @@ vtk_write_header(fid, 'bubble_sim');
 vtk_write_unstructured_grid(fid, p_BP, tris);
 vtk_write_point_data_header(fid, p_BP);
 vtk_write_scalar_data(fid, 'Displacement', u);
-vtk_write_scalar_data(fid, 'Pressure', pc);
+vtk_write_scalar_data(fid, 'Pressure', -pc);
 vtk_write_scalar_data(fid, 'MeanCurvature', Hmean);
 fclose(fid);
 
@@ -211,7 +213,7 @@ vtk_write_header(fid, 'point_cloud');
 vtk_write_scattered_points(fid, p_BY);
 vtk_write_point_data_header(fid, p_BY);
 vtk_write_scalar_data(fid, 'Distance', dist);
-vtk_write_scalar_data(fid, 'ContactPressure', pcray);
+vtk_write_scalar_data(fid, 'ContactPressure', -pcray);
 fclose(fid);
 
 file = sprintf('bubble_fit_%03d.vtk', istep);
@@ -220,7 +222,7 @@ vtk_write_header(fid, 'bubble_fit');
 vtk_write_unstructured_grid(fid, p_BPfit, tris);
 vtk_write_point_data_header(fid, p_BPfit);
 vtk_write_scalar_data(fid, 'Displacement', ufit);
-vtk_write_scalar_data(fid, 'Pressure', pcfit);
+vtk_write_scalar_data(fid, 'Pressure', -pcfit);
 fclose(fid);
 
 toc

@@ -4,6 +4,8 @@ function [phi0, H, Hcols]= shoot_rays_to_mesh(p_BP_list, normalP_B_list, mesh_tr
 % box_size: 3D vector with sides lenghts in box frame.
 % X_BO: pose of the box in the mesh (W) frame.
 
+dist_offset = 0.2;
+
 nnodes = size(p_BP_list, 1);
 
 X_OB = pose_inverse(X_BO);
@@ -19,8 +21,10 @@ for i=1:nnodes
    p_BP = p_BP_list(i, :)';
    normalP_B = normalP_B_list(i, :)';
    
+   p_BPprime = p_BP - dist_offset * normalP_B;
+   
    normalP_O_list(i, :) = R_OB * normalP_B;
-   p_OP_list(i, :) = transform_point(X_OB, p_BP);
+   p_OP_list(i, :) = transform_point(X_OB, p_BPprime);
 end
 
 % No update needed, we do everythin in the object frame.
@@ -29,7 +33,7 @@ end
 % Compute points Q on the object's mesh that intersect rays spawning from
 % the bubble's mesh in their normal directions.
 [does_hit, dist, tri_index, bar_coos, p_OQ] = ...
-    mesh_tree.intersect(p_OP_list', -normalP_O_list');
+    mesh_tree.intersect(p_OP_list', normalP_O_list');
 %p_BY = p_BY';
 
 % Apparently OPCODE uses single precision. We convert to double
@@ -48,19 +52,21 @@ phi0v = zeros(nnodes, 1);
 nphi = 0;
 for i=1:nnodes
     
-    if (does_hit(i))
-        nphi = nphi + 1;
-        distance = dist(i);
+    if (does_hit(i))        
+        distance = dist_offset - dist(i);
         
-        % Signed distance is negative when inside the box.
-        phi0v(nphi) = -distance;
+        if (distance > 0)
+            nphi = nphi + 1;
+            % Signed distance is negative when inside the box.
+            phi0v(nphi) = -distance;
    
-        % Changes in u are in the direction to the normal given how we computed
-        % phi0.
-        % Build approximation phi = phi0 - H * u, st H * u < phi0
-        Hv(nphi) = 1.0;   
-        Hi(nphi) = nphi;
-        Hj(nphi) = i;
+            % Changes in u are in the direction to the normal given how we computed
+            % phi0.
+            % Build approximation phi = phi0 - H * u, st H * u < phi0
+            Hv(nphi) = 1.0;   
+            Hi(nphi) = nphi;
+            Hj(nphi) = i;
+        end
     end          
 end
 
