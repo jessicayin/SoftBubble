@@ -25,7 +25,7 @@ classdef PicoFlexCamera
             this.tree = opcodemesh(p_BP', t'); % NOTE!: I am using the transpose!
         end
         
-        function [does_hit, dist, tri_index, bar_coos, p_BY] = GeneratePointCloud(this, p_BP, sigma_dist)
+        function [does_hit, dist, tri_index, bar_coos, p_BY] = GeneratePointCloud(this, p_BP, sigma_dist, default_dist)
             
             this.tree.update(p_BP');
             [does_hit, dist, tri_index, bar_coos, p_BY] = ...
@@ -35,6 +35,11 @@ classdef PicoFlexCamera
             % since when multiplying by sparse matrices Matlab needs the
             % type to be "double".
             dist = double(dist); 
+            
+            % Sometimes it seems like OPCODE reports misses (nans). DEBUG!
+            nan_indexes = find(isnan(dist));
+            dist(nan_indexes) = default_dist(nan_indexes);
+            p_BY(nan_indexes, :) = zeros(length(nan_indexes), 3);
 
             % Add noise.
             %dist_noise = normrnd(0.0, sigma_dist, nr, 1); % You need a toolbox for

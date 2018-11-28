@@ -1,6 +1,6 @@
 % Ficticious time step.
 dt = 0.1;
-nsteps = 50;
+nsteps = 60;
 
 % Rigid box sizes.
 box_size = [1 1 1] * 0.05;
@@ -12,7 +12,9 @@ R_BO = MakeRpy(rpy);
 X_BO = MakePose(R_BO, p_BO);
 
 % Bubble surface mesh file.
-bubble_mesh_path = 'bubble_R1p0_h0p5.obj';
+%bubble_mesh_path = 'bubble_R1p0_h0p5.obj';
+%bubble_mesh_path = 'bubble_R1p0_h0p5_res0p067.obj';
+bubble_mesh_path = 'bubble_R1p0_h0p5_res0p04.obj';
 
 % Object surface mesh file.
 %object_mesh_path = 'models/bridge_1.obj';
@@ -79,7 +81,7 @@ toc
 
 sprintf('Generating point cloud on undeformed bubble...')
 tic
-[does_hit0, dist0, ray_tri_index0, bar_coos0, p_BY0] = camera.GeneratePointCloud(p_BP0, 0.0);
+[does_hit0, dist0, ray_tri_index0, bar_coos0, p_BY0] = camera.GeneratePointCloud(p_BP0, 0.0, []);
 toc
 
 % =========================================================================
@@ -133,7 +135,7 @@ end
 
 for istep = 0:(2*nsteps-1)
 %for istep = nsteps:nsteps
-%for istep = 0:0
+%for istep = 40:40
     time = istep * dt;
 
     X_BO = X_BO_sequence(:, :, istep+1);
@@ -156,7 +158,7 @@ toc
 % =========================================================================
 sprintf('Generating point cloud on deformed bubble...')
 tic
-[does_hit, dist, ray_tri_index, bar_coos, p_BY] = camera.GeneratePointCloud(p_BP, sigma_dist);
+[does_hit, dist, ray_tri_index, bar_coos, p_BY] = camera.GeneratePointCloud(p_BP, sigma_dist, dist0);
 toc
 
 % =========================================================================
