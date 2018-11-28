@@ -29,8 +29,8 @@ function [X_WB, rpy] = box_pose(time, dt, X_WB, rpy0)
         vz = -0.035; % m/s
         p_WB(3) = p_WB(3) + vz * dt;
         X_WB = MakePose(R_WB, p_WB);
-    elseif (time < 5.0)
-        omega = pi/4; % 45 degs in a second.
+    elseif (time < 6.0)
+        omega = -pi/4; % 45 degs in a second.
         rpy = [omega * dt, 0, 0] + rpy0;       
         R_WB = MakeRpy(rpy);
         X_WB = MakePose(R_WB, p_WB);
