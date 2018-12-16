@@ -11,14 +11,37 @@ classdef PicoFlexCamera
     methods
     
         % Constructor.
+        function this = PicoFlexCamera(varargin)
+            if nargin == 3
+                this = this.PicoFlexCameraFromDataSheet(varargin{1}, varargin{2}, varargin{3});
+            elseif nargin == 4
+                this = this.PicoFlexCameraFromProvidedDirections(varargin{1}, varargin{2}, varargin{3}, varargin{4});
+            else
+                error('Wrong number of arguments.');
+            end
+        end            
+        
         % p_BC: position of the camera frame C in the bubble frame B.
-        function this = PicoFlexCamera(p_BC, p_BP, t)
+        function this = PicoFlexCameraFromDataSheet(this, p_BC, p_BP, t)
             % Position of the picoflex camera frame C in the bubble frame B.
             this.p_BC = p_BC;
             
             this.rhat_C = generate_picoflex_rays();
             this.nr = size(this.rhat_C, 1);
             this.p_BC_list = repmat(p_BC', 1, this.nr);  % As needed by OPCODE
+
+            % Generate AABB tree for the mesh.
+            addpath('../opcodemesh/matlab'); % Make OPCODE lib available.
+            this.tree = opcodemesh(p_BP', t'); % NOTE!: I am using the transpose!
+        end
+        
+        function this = PicoFlexCameraFromProvidedDirections(this, p_BC, rhat_C, p_BP, t)
+            % Position of the picoflex camera frame C in the bubble frame B.
+            this.p_BC = p_BC;
+            
+            this.rhat_C = rhat_C; % OPCDE requires the transpose.
+            this.nr = size(this.rhat_C, 1);
+            this.p_BC_list = repmat(p_BC, 1, this.nr);  % As needed by OPCODE
 
             % Generate AABB tree for the mesh.
             addpath('../opcodemesh/matlab'); % Make OPCODE lib available.
