@@ -75,7 +75,9 @@ theta_P = asin(ell/R*sin(theta_C)); % Law of sines to compute angle at P.
 theta_M = pi - (theta_P + theta_C); % angle at M, the membrane's center.
 dist_true = sqrt(R*R + ell*ell - 2 * ell * R * cos(theta_M)); % Law of cosines.
 
-% Compute "scaling" factor.
+% Compute offset. Here we assume a slope of one (1.0).
+offset = dist_true - dist_avg;  % Then dist_corr =  dist + dist_offset;
+
 factor = (dist_true)./(dist_avg+dist_offset);
 % Givean measured distance, the correction would be:
 % dist_corr = (dist + dist_offset) * factor;
@@ -106,3 +108,5 @@ fid = fopen(file, 'w');
 vtk_write_header(fid, 'bubble_mesh');
 vtk_write_unstructured_grid(fid, p_BP0, tris);
 fclose(fid);
+
+
