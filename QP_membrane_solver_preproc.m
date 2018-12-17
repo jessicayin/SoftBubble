@@ -1,4 +1,4 @@
-function [normal0_W, K, Aeq, node_areas, node_boundary, dVdu] = QP_membrane_solver_preproc(p_WP0, t, T0, V0, p0)
+function [normal0_W, K, Aeq, node_areas, node_boundary, dVdu, areas_wbcs] = QP_membrane_solver_preproc(p_WP0, t, T0, V0, p0)
 
 % Compute normals at the nodes.
 [normal0_W, node_areas] = calc_area_weighted_normals(p_WP0, t);
@@ -59,6 +59,9 @@ Aeq = dVdu';
 
 % Apply BCs to volume constraint to be consistent with K.
 Aeq(ibcs) = 0;
+
+areas_wbcs = node_areas;
+areas_wbcs(ibcs) = 0;
 
 %dpdu = -p0/V0 * dVdu;
 %Aeq(nbcs + 1, 1:nnodes) = dpdu; %Av';

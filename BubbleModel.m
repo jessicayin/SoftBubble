@@ -6,6 +6,7 @@ classdef BubbleModel
         normal0_B, K, Aeq, node_areas, node_boundary;
         dVdu; % Derivative of the enclosed volume with respect to u.
         V0, p0;
+        areas_wbcs; % Node areas vector. At BC nodes they are made equal to zero.
     end
        
     methods
@@ -20,7 +21,7 @@ classdef BubbleModel
            this.p0 = p0;
            
            % Pre-compute quantities that do not change.
-           [this.normal0_B, this.K, this.Aeq, this.node_areas, this.node_boundary, this.dVdu] = ...
+           [this.normal0_B, this.K, this.Aeq, this.node_areas, this.node_boundary, this.dVdu, this.areas_wbcs] = ...
                QP_membrane_solver_preproc(p_BP0, tris, T0, V0, p0);                     
         end
         
@@ -29,11 +30,53 @@ classdef BubbleModel
         % H: -dphi/du, a sparse matrix with as many rows as entries in phi0
         % and as many columns as number of unkknows (number of mesh nodes).
         function [u, pr, pv, p_BP, Hmean, lambda] = ComputeSolution(this, phi0, H, Hj)
+            
+            pa = 101325; % Atmospheric pressure in Pa
+            
+            %pv = 1.075582560000000e+03; % pv = 0.53 psi - p0
+            max_iters = 20;
+            relative_tolerance = 1.0e-4;
+            omega = 0.6;  % Relaxation. Found by trial and error.
+            pv = 0;
+            
+            this.V0
+            this.p0
+            
+            % External fixed-point iteration to find pressure.
+            for it = 1:max_iters
+            
             [u, pv, p_BP, lambda] = QP_membrane_solver(...
                 this.p_BP0, this.tris, this.T0, ...
                 this.normal0_B, this.K, this.Aeq, ...
-                phi0, H);
-
+                phi0, H, pv, this.areas_wbcs);
+            
+            % Volume
+            V = this.dVdu' * u + this.V0;
+            
+            % Compute new pressure. Gas ideal law.
+            % Use absolute pressure, i.e. add atmospheric pressure.
+            pvk = (this.p0+pa) * this.V0 / V - (this.p0+pa);
+            
+            %it
+            %V
+            %pvk
+            
+            % Convergence error.
+            pv_err = pvk - pv;
+            pv_rel_err = abs(pv_err/pvk);
+            
+            %pv_rel_err
+            
+            % Update pressure. Maybe use relaxation.
+            pv = omega * pvk + (1-omega) * pv;
+            
+            if (pv_rel_err < relative_tolerance)
+                sprintf('Converged at iteration %d. pv = %g', it, pv)
+                break;
+            end            
+            
+            end
+            
             npoints = size(this.p_BP0, 1);
             %u = x(1:npoints);
             %pv = x(npoints+1);

@@ -43,6 +43,7 @@ p_BC = -p_CB;  % Review this number from Alex's latest drawings.
 % Therefore: 
 % That is: 2⋅T₀/R = p₀
 A = pi*a^2;
+pa = 101325; % Atmospheric pressure in Pa
 p0_psi = 3.74e-1; % PSI
 %p0_psi = 0.05; % From Connor's presentation height vs. pressure plot.
 psi_to_pa = 6894.76;
