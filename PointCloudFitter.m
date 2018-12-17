@@ -15,7 +15,12 @@ classdef PointCloudFitter
         
         % Mesh:
         p_BP0;
+        tris;
         normalP0_B;
+        
+        p_BC; % Camera C position in the bubble frame B.
+        
+        rhat_B; % Camera ray directions.
         
         % Problem sizes.
         npoints, nbcs, nrays;
@@ -28,22 +33,40 @@ classdef PointCloudFitter
     end   
     
     methods
-    
+                   
         % Constructor.
+        function this = PointCloudFitter(varargin)
+            if (nargin == 16)
+                this = this.MakePointCloudFitterFromSeparateData(...
+                    varargin{1}, varargin{2}, varargin{3}, varargin{4}, varargin{5},...
+                    varargin{6}, varargin{7}, varargin{8}, varargin{9}, varargin{10},...
+                    varargin{11}, varargin{12}, varargin{13}, varargin{14}, varargin{15}, varargin{16});
+            elseif(nargin == 1)
+                file_name = varargin{1};
+                fitter_data = load(file_name);
+                this = fitter_data.fitter;
+            else
+                error('Wrong number of arguments.');
+            end
+        end
+        
         % p_BC: position of the camera frame C in the bubble frame B.
-        function this = PointCloudFitter(...
+        function this = MakePointCloudFitterFromSeparateData(this, ...
                 p_BP0, normalP_B, tris, node_boundary, ...
                 rhat_C, d0, bar_coos, ray_tri_index, ...
                 K, node_areas, Gv, Gp, ...
-                sigma_dist, T0, a) % scales
+                sigma_dist, T0, a, p_BC) % scales
             npoints = size(p_BP0, 1);
             nrays = size(rhat_C, 1);
             
             this.p_BP0 = p_BP0;
+            this.p_BC = p_BC;
             this.normalP0_B = normalP_B;
             this.sigma_dist = sigma_dist;
             this.T0 = T0;
             this.a = a;
+            this.rhat_B = rhat_C;
+            this.tris = tris;
             
             % Triplets of values to build D.
             ii = zeros(3*nrays, 1);

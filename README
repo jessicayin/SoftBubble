@@ -33,6 +33,11 @@ In this demo we:
 4) Use the contact pressure interpolated onto the point cloud as a
    threshold to identify which points belong to the contact patch only.
 
+* Making/using the fitter from saved data:
+1) Create fitter data and save it to a file with: doall_create_and_save_fitter_data.m
+   This will generate a *.mat file with all data needed to create a fitter.
+2) Make use of method fit_bubble_mode.m. See example in doall_fiter.m.
+
 Solver internals:
 =================
 
