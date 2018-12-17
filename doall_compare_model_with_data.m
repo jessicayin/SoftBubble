@@ -147,7 +147,7 @@ toc
 % =========================================================================
 
 % Pressure gradient.
-dpdu = -p0/V0 * bubble.dVdu;
+dpdu = -(p0+pa)/V0 * bubble.dVdu;
 
 sprintf('Making fitter...')
 tic
@@ -255,7 +255,7 @@ vtk_write_header(fid, 'point_cloud');
 vtk_write_scattered_points(fid, p_BY_corr);
 vtk_write_point_data_header(fid, p_BY_corr);
 vtk_write_scalar_data(fid, 'Distance', dist_corr);
-%vtk_write_scalar_data(fid, 'ContactPressure', -pcray);
+vtk_write_scalar_data(fid, 'ContactPressure', -pcray);
 fclose(fid);
 
 % Reference point cloud computed with camera.GeneratePointCloud() on the

@@ -91,7 +91,7 @@ classdef PointCloudFitter
             
             % Regularization.
             %this.H(npoints+(1:npoints), npoints+(1:npoints)) = sparse(1:npoints, 1:npoints, ones(npoints, 1), npoints, npoints);
-            this.H(2*npoints+1, 2*npoints+1) = 0.1;  % minimum pv
+            %this.H(2*npoints+1, 2*npoints+1) = 0.1;  % minimum pv
             
             
             K = K/T0;
@@ -135,8 +135,8 @@ classdef PointCloudFitter
             % Volumetric pressure change.
             Gp(ibcs) = 0;
             Gv(ibcs) = 0;
-            Aeq(npoints+ nbcs + 1,1:npoints) = Gv';
-            %Aeq(npoints+ nbcs + 1,2*npoints+1) = -1;
+            Aeq(npoints+ nbcs + 1,1:npoints) = Gp';
+            Aeq(npoints+ nbcs + 1,2*npoints+1) = -1;
             
             this.Aeq = Aeq;
             
