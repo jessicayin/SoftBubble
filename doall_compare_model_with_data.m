@@ -1,5 +1,8 @@
-folder_name = 'depth_3';
+
+%bubble_mesh = 'bubble_h0p044';
 bubble_mesh = 'bubble_h0p067';
+folder_name = 'depth_3'; istamp = 250;
+%folder_name = 'depth_2'; istamp = 170;
 
 % This seems to be used now as a reference scale by the fitter to write
 % things in dimensionless form?? double-check.
@@ -8,8 +11,6 @@ sigma_dist = sigma_percent * 0.15; % distances are around 15 cm.
 
 % Object surface mesh file.
 object_mesh_path = 'models/pyr_frustum_1.obj';
-
-istamp = 250;
 
 dist_offset = -0.0055; % value eye-balled in Paraview. We can do a proper linear fit per point.
 
