@@ -1,4 +1,5 @@
-fitter_data_file_name = 'bubble_fitter_h0p067.mat';
+fitter_data_file_name = 'fitter_from_bubble_h0p067.mat';
+%fitter_data_file_name = 'fitter_from_bubble_nn818nt1501.mat';
 folder_name = 'depth_3'; istamp = 250;
 %bubble_model = load('bubble_model_h0p067.mat');
 

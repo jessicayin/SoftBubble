@@ -1,5 +1,6 @@
 %bubble_mesh = 'bubble_h0p044';
-bubble_mesh = 'bubble_h0p067';
+bubble_mesh = 'bubble_h0p067';  % From uniform mesh.
+%bubble_mesh = 'bubble_nn818nt1501';  % From non-uniform mesh.
 folder_name = 'depth_3'; istamp = 250;
 %folder_name = 'depth_2'; istamp = 170;
 
@@ -107,7 +108,8 @@ toc
 %camera_data.rhat_B = camera.rhat_C;
 %save('bubble_model_h0p067.mat', 'bubble', 'camera_data', 'dist0', 'bar_coos0', 'ray_tri_index0', 'p0', 'pa', 'V0', 'T0', 'a', 'sigma_dist');
 
-save('bubble_fitter_h0p067.mat', 'fitter', 'p_BC');
+file_name = sprintf('fitter_from_%s.mat', bubble_mesh);
+save(file_name, 'fitter', 'p_BC');
 
 
 
