@@ -1,8 +1,6 @@
 %bubble_mesh = 'bubble_h0p044';
 bubble_mesh = 'bubble_h0p067';  % From uniform mesh.
 %bubble_mesh = 'bubble_nn818nt1501';  % From non-uniform mesh.
-folder_name = 'depth_3'; istamp = 250;
-%folder_name = 'depth_2'; istamp = 170;
 
 % This seems to be used now as a reference scale by the fitter to write
 % things in dimensionless form?? double-check.

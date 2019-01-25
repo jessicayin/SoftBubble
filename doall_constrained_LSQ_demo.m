@@ -1,6 +1,6 @@
 % Ficticious time step.
 dt = 0.1;
-nsteps = 60;
+nsteps = 10;
 
 % Rigid box sizes.
 box_size = [1 1 1] * 0.05;
