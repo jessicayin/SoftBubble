@@ -31,7 +31,15 @@ toc
 % =========================================================================
 % Solve inverse problem.
 % =========================================================================
-[ufit, pcfit, pvfit, p_BPfit, pcray, fitter] = fit_bubble_model(fitter_data_file_name, dist_corr);
+
+% Randomly draw a number of rays to ignore.
+nrays_to_ignore = 500; % We'll ignore this many rays.
+nrays = length(dist_corr);
+idx = min(nrays, ceil(nrays*rand([nrays_to_ignore, 1])));
+weight = ones(size(dist_corr));
+weight(idx) = 0;  % "Turn off" these rays.
+
+[ufit, pcfit, pvfit, p_BPfit, pcray, fitter] = fit_bubble_model(fitter_data_file_name, dist_corr, weight);
 
 % Correct point cloud.
 rhat_B = fitter.rhat_B;  % Camera ray directions.

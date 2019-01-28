@@ -206,6 +206,51 @@ classdef PointCloudFitter
             end
         end
         
+        % Allows fitting the point cloud with a given weight vector for y.
+        function [u, pc, pv, p_BP] = FitPointCloudWeighted(this, y, weight)
+            npoints = this.npoints;
+            nbcs = this.nbcs;
+            nrays = this.nrays;
+            sigma_dist = this.sigma_dist;            
+            a = this.a;
+            T0 = this.T0;
+                
+            % W = diag(weight).
+            W = sparse(1:nrays, 1:nrays, weight, nrays, nrays);
+            
+            fu = (W*this.D)' * (this.d0 - y/a); % I made fu dimensionless.
+            fu = fu * this.cost_factor;
+            f = zeros(2*npoints+1, 1);
+            f(1:npoints) = fu;
+            
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            % Recompute quadratic cost matrix
+            Hnnz = nnz(this.Hu) + npoints + 1;
+            H = spalloc(2*npoints+1, 2*npoints+1, Hnnz);
+            
+            % Assumption; W'*W = W, since it only contains ones and zeros
+            % in the diagonal it turns out to be a projection.            
+            H(1:npoints, 1:npoints) = this.D' * W * this.D * this.cost_factor;
+            %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+            
+            bne = zeros(npoints, 1);
+            beq = zeros(npoints + nbcs + 1, 1);
+            
+            % Make everything dimensionless.
+            
+            [x, fval, exit_flag] = quadprog(H, f, this.Ane, bne, this.Aeq, beq);           
+            %[x, fval, exit_flag] = quadprog(this.H, f, [], [], this.Aeq, beq);           
+            
+            u = x(1:npoints) * a;
+            pc = x((npoints+1):(2*npoints)) * T0/a;
+            pv = x(2*npoints+1) * T0/a;
+            
+            p_BP = zeros(npoints, 3);
+            for i=1:npoints
+                p_BP(i, :) = this.p_BP0(i, :) + u(i) * this.normalP0_B(i, :); 
+            end
+        end
+        
         function [f, fq, fl] = CalcCostFunction(this, y, u, pc, pv)
             npoints = this.npoints;
             nbcs = this.nbcs;
