@@ -61,10 +61,17 @@ toc
 % Read undeformed bubble data.
 % From here we get the ray directions.
 % =========================================================================
-file = sprintf('../Experiments/no_penetration/p_CY_avg.dat');
-p_CY_avg = importdata(file);
+file = sprintf('../Experiments/reference_configuration/p_CY_avg.dat');
+p_CY_avg = dlmread(file);
 dist_avg = sqrt(sum(p_CY_avg.^2,2));
 rhat_B = p_CY_avg ./ dist_avg;
+
+% Bypass NaN entries
+idx = isnan(dist_avg);
+num_nans =  size(find(idx==1));
+p_CY_avg(idx, :) = repmat(p_CB',[num_nans , 1]);
+dist_avg(idx) = norm(p_CB);
+rhat_B(idx,:) = repmat([0 0 1],[num_nans , 1]);
 
 %addpath('../opcodemesh/matlab'); % Make OPCODE lib available.
 
@@ -81,7 +88,8 @@ toc
 
 sprintf('Generating point cloud on undeformed bubble...')
 tic
-[does_hit0, dist0, ray_tri_index0, bar_coos0, p_BY0] = camera.GeneratePointCloud(p_BP0, 0.0, []);
+default_dist = 999*ones(size(dist_avg));
+[does_hit0, dist0, ray_tri_index0, bar_coos0, p_BY0] = camera.GeneratePointCloud(p_BP0, 0.0, default_dist);
 toc
 
 % =========================================================================
@@ -109,6 +117,14 @@ toc
 file_name = sprintf('fitter_from_%s.mat', bubble_mesh);
 save(file_name, 'fitter', 'p_BC');
 
+% Save p_CY to file
+file = sprintf('reference_configuration_cloud.vtk');
+fid = fopen(file, 'w');
+vtk_write_header(fid, 'reference_configuration_cloud');
+vtk_write_scattered_points(fid, p_CY_avg);
+vtk_write_point_data_header(fid, p_CY_avg);
+vtk_write_scalar_data(fid, 'Distance', dist_avg);
+fclose(fid);
 
 
 

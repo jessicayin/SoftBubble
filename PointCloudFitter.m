@@ -74,13 +74,17 @@ classdef PointCloudFitter
             vv = zeros(3*nrays, 1);
             Sv = zeros(3*nrays, 1);  % Shape function matrix.
             
+            count = 0;
             for iray = 1:nrays
                 % Triangle index of the triangle hit by the ray.
                 itri = ray_tri_index(iray);
     
+                %if (itri~=0)
+                count = count+1;
+                
                 % Node indexes of the triangle hit by the ray.
                 tri = tris(itri, :);
-    
+                
                 % Barycentric coordinates of the intersection point.
                 coos2 = bar_coos(:, iray);
                 Siray = [1.0 - coos2(1) - coos2(2); coos2(1); coos2(2)];
@@ -91,11 +95,13 @@ classdef PointCloudFitter
                 normal_dot_ray = dot(normal_iray_B, rhat_C(iray, :));
                 
                 %D(iray, tri) = normal_dot_ray * Siray;
-                ivalue = 3 * (iray-1) + (1:3);
+                ivalue = 3 * (count-1) + (1:3);
                 ii(ivalue) = [iray, iray, iray];
                 jj(ivalue) = tri;
                 vv(ivalue) = normal_dot_ray * Siray;
                 Sv(ivalue) = Siray;
+                                
+                %end
             end
             
             % This is the factor when u is dimensionless.
@@ -218,7 +224,7 @@ classdef PointCloudFitter
             % W = diag(weight).
             W = sparse(1:nrays, 1:nrays, weight, nrays, nrays);
             
-            fu = (W*this.D)' * (this.d0 - y/a); % I made fu dimensionless.
+            fu = this.D' * (W * (this.d0 - y/a)); % I made fu dimensionless.
             fu = fu * this.cost_factor;
             f = zeros(2*npoints+1, 1);
             f(1:npoints) = fu;

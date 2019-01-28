@@ -10,8 +10,8 @@ p_BC = [0; 0; -0.1040]; % Position of the camera C in bubble frame B.
 % =========================================================================
 sprintf('Reading calibration data...')
 tic
-file = sprintf('../Experiments/no_penetration/offset.dat');
-dist_offset = importdata(file);
+file = sprintf('../Experiments/reference_configuration/reference_configuration_offset.dat');
+dist_offset = dlmread(file);
 toc
 
 % =========================================================================
@@ -19,12 +19,15 @@ toc
 % =========================================================================
 sprintf('Reading point cloud...')
 tic
-file = sprintf('../Experiments/%s/point_cloud_%03d.dat', folder_name, istamp);
-p_CY = importdata(file);
+%file = sprintf('../Experiments/%s/point_cloud_%03d.dat', folder_name, istamp);
+file = sprintf('../Experiments/point_cloud_with_contact.dat');
+%file = '../Experiments/reference_configuration/reference_point_cloud_38304points_073.dat';
+p_CY = dlmread(file);
 dist = sqrt(sum(p_CY.^2,2));
 p_BY = p_CY  + p_BC';
 
-% Corrected point cloud.
+% Corrected point cloud. (Both dist and dist_offset will contribute to
+% NaNs)
 dist_corr = dist + dist_offset;
 toc
 
@@ -33,17 +36,20 @@ toc
 % =========================================================================
 
 % Randomly draw a number of rays to ignore.
-nrays_to_ignore = 500; % We'll ignore this many rays.
-nrays = length(dist_corr);
-idx = min(nrays, ceil(nrays*rand([nrays_to_ignore, 1])));
+%nrays_to_ignore = 500; % We'll ignore this many rays.
+%nrays = length(dist_corr);
+%idx = min(nrays, ceil(nrays*rand([nrays_to_ignore, 1])));
+idx = isnan(dist_corr);
 weight = ones(size(dist_corr));
 weight(idx) = 0;  % "Turn off" these rays.
+dist_corr(idx) = -999;
 
 [ufit, pcfit, pvfit, p_BPfit, pcray, fitter] = fit_bubble_model(fitter_data_file_name, dist_corr, weight);
 
 % Correct point cloud.
 rhat_B = fitter.rhat_B;  % Camera ray directions.
 p_BY_corr = rhat_B .* dist_corr + p_BC';
+p_BY_corr(idx,:) = 0;
 
 % =========================================================================
 % Write files
@@ -67,4 +73,3 @@ vtk_write_point_data_header(fid, p_BPfit);
 vtk_write_scalar_data(fid, 'Displacement', ufit);
 vtk_write_scalar_data(fid, 'Pressure', pcfit);
 fclose(fid);
-

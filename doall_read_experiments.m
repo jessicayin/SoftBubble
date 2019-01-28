@@ -1,7 +1,8 @@
-folder_name = 'no_penetration';
+folder_name = 'reference_configuration';
 bubble_mesh = 'bubble_h0p044';
+%bubble_mesh = 'bubble_h0p067';
 istamp_start = 1;
-istamp_end = 80; % from 90 onwards it corresponds (erroneously) to object touching. 
+istamp_end = 100; % from 90 onwards it corresponds (erroneously) to object touching. 
 istamp_stride = 1;
 % Camera paramters from its datasheet.
 nh = 224;  % pixels in horizontal direction.
@@ -10,7 +11,7 @@ dist_offset = -0.0055; % value eye-balled in Paraview. We can do a proper linear
 
 % TODO: ask for ALL data, so that we have the correlation with original
 % rays.
-nr = 37000; % For now Naveen downsampled. 
+nr = 38304; % For now Naveen downsampled. 
 
 h0 = 0.044;
 D = 0.15;  % diameter of the flat membrane.
@@ -37,9 +38,9 @@ for istamp = istamp_start:istamp_stride:istamp_end
     
 % Point cloud data in camera frame.
 %file = sprintf('../Experiments/%s/point_cloud_%03d.dat', folder_name, istamp);
-file = sprintf('../Experiments/%s/point_cloud_%03d.dat', folder_name, istamp);
+file = sprintf('../Experiments/%s/reference_point_cloud_38304points_%03d.dat', folder_name, istamp);
 
-p_CY = importdata(file);
+p_CY = dlmread(file);
 dist = sqrt(sum(p_CY.^2,2));
 dist_avg = dist_avg + dist;
 
