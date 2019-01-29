@@ -93,11 +93,17 @@ dpdu = -p0/V0 * bubble.dVdu;
 
 sprintf('Making fitter...')
 tic
+%fitter = PointCloudFitter(...
+%                bubble.p_BP0, bubble.normal0_B, bubble.tris, bubble.node_boundary, ...
+%                camera.rhat_C, dist0, bar_coos0, ray_tri_index0, ...
+%                bubble.K, bubble.node_areas, bubble.dVdu, dpdu, ...
+%                sigma_dist, T0, a);
+            
 fitter = PointCloudFitter(...
                 bubble.p_BP0, bubble.normal0_B, bubble.tris, bubble.node_boundary, ...
                 camera.rhat_C, dist0, bar_coos0, ray_tri_index0, ...
                 bubble.K, bubble.node_areas, bubble.dVdu, dpdu, ...
-                sigma_dist, T0, a);
+                sigma_dist, T0, a, p_BC);            
 
 toc
 
@@ -133,7 +139,14 @@ for istep = nsteps:(2*nsteps-1)
     X_BO_sequence(:, :, istep+1) = X_BO_sequence(:, :, iback);
 end
 
-for istep = 0:(2*nsteps-1)
+rpy = [pi + pi/4, pi/4, 0];
+p_BO = [0; 0; 0.05];
+X_BO_sequence = zeros(4, 4, 1);
+R_BO = MakeRpy(rpy);
+X_BO = MakePose(R_BO, p_BO);
+X_BO_sequence(:, :, 1) = X_BO;
+
+for istep = 0:(size(X_BO_sequence, 3)-1)
 %for istep = nsteps:nsteps
 %for istep = 40:40
     time = istep * dt;
@@ -232,8 +245,11 @@ toc
 end
 
 
-
-
+file = sprintf('bubble_reference.vtk');
+fid = fopen(file, 'w');
+vtk_write_header(fid, 'bubble_reference');
+vtk_write_unstructured_grid(fid, p_BP0, tris);
+fclose(fid);
 
 
 

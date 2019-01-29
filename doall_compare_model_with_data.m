@@ -182,8 +182,12 @@ end
 % Solve inverse problem by least squares.
 % =========================================================================
 sprintf('Solve inverse problem by least squares...')
+
+weight = ones(size(dist));
+
 tic
-[ufit, pcfit, pvfit, p_BPfit] = fitter.FitPointCloud(dist_corr);
+%[ufit, pcfit, pvfit, p_BPfit] = fitter.FitPointCloud(dist_corr);
+[ufit, pcfit, pvfit, p_BPfit] = fitter.FitPointCloudWeighted(dist_corr, weight);
 toc
 
 % =========================================================================
