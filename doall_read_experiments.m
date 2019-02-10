@@ -1,8 +1,8 @@
-folder_name = 'reference_configuration';
+folder_name = 'calibration_data/camera_right';
 bubble_mesh = 'bubble_h0p044';
 %bubble_mesh = 'bubble_h0p067';
 istamp_start = 1;
-istamp_end = 100; % from 90 onwards it corresponds (erroneously) to object touching. 
+istamp_end = 150; % from 90 onwards it corresponds (erroneously) to object touching. 
 istamp_stride = 1;
 % Camera paramters from its datasheet.
 nh = 224;  % pixels in horizontal direction.
@@ -38,7 +38,7 @@ for istamp = istamp_start:istamp_stride:istamp_end
     
 % Point cloud data in camera frame.
 %file = sprintf('../Experiments/%s/point_cloud_%03d.dat', folder_name, istamp);
-file = sprintf('../Experiments/%s/reference_point_cloud_38304points_%03d.dat', folder_name, istamp);
+file = sprintf('../Experiments/%s/no_touch_configuration_%03d.dat', folder_name, istamp);
 
 p_CY = dlmread(file);
 dist = sqrt(sum(p_CY.^2,2));

@@ -34,9 +34,9 @@ classdef BubbleModel
             pa = 101325; % Atmospheric pressure in Pa
             
             %pv = 1.075582560000000e+03; % pv = 0.53 psi - p0
-            max_iters = 20;
+            max_iters = 50;
             relative_tolerance = 1.0e-4;
-            omega = 0.6;  % Relaxation. Found by trial and error.
+            omega = 0.7;  % Relaxation. Found by trial and error.
             pv = 0;
             
             this.V0
@@ -55,7 +55,12 @@ classdef BubbleModel
             
             % Compute new pressure. Gas ideal law.
             % Use absolute pressure, i.e. add atmospheric pressure.
-            pvk = (this.p0+pa) * this.V0 / V - (this.p0+pa);
+            P0 = (this.p0+pa);
+            pvk = P0 * this.V0 / V - P0;
+            
+            % Limit pvk, specially for first few iterations.
+            pvk = min(pvk, 3*P0);
+            pvk = max(0, pvk);  % Pressure should in crease.
             
             %it
             %V
@@ -76,6 +81,10 @@ classdef BubbleModel
             end            
             
             end
+            
+            if (pv_rel_err > relative_tolerance)
+                error('DIVERGENCE!!! max-iters: %d. pv = %g', it, pv);
+            end            
             
             npoints = size(this.p_BP0, 1);
             %u = x(1:npoints);

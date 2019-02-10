@@ -1,6 +1,6 @@
 % Ficticious time step.
 dt = 0.1;
-nsteps = 10;
+nsteps = 60;
 
 % Rigid box sizes.
 box_size = [1 1 1] * 0.05;
@@ -37,7 +37,7 @@ h0 = 0.0375; % Consistent with the mesh.
 a = 0.15 / 2; % Flat membrane radius.
 R=(h0^2+a^2)/2/h0;  % Spherical cap radius.
 
-p0_psi = 0.05; % From Connor's presentation height vs. pressure plot.
+p0_psi = 0.3; % From Naveen's latest. Order of magnitude.
 psi_to_pa = 6894.76;
 p0 = p0_psi * psi_to_pa;  % [Pa]
 T0 = p0 * R / 2; % Young–Laplace equation.
@@ -139,16 +139,16 @@ for istep = nsteps:(2*nsteps-1)
     X_BO_sequence(:, :, istep+1) = X_BO_sequence(:, :, iback);
 end
 
-rpy = [pi + pi/4, pi/4, 0];
-p_BO = [0; 0; 0.05];
-X_BO_sequence = zeros(4, 4, 1);
-R_BO = MakeRpy(rpy);
-X_BO = MakePose(R_BO, p_BO);
-X_BO_sequence(:, :, 1) = X_BO;
+%rpy = [pi + pi/4, pi/4, 0];
+%p_BO = [0; 0; 0.05];
+%X_BO_sequence = zeros(4, 4, 1);
+%R_BO = MakeRpy(rpy);
+%X_BO = MakePose(R_BO, p_BO);
+%X_BO_sequence(:, :, 1) = X_BO;
 
 for istep = 0:(size(X_BO_sequence, 3)-1)
 %for istep = nsteps:nsteps
-%for istep = 40:40
+%for istep = 49:49
     time = istep * dt;
 
     X_BO = X_BO_sequence(:, :, istep+1);
