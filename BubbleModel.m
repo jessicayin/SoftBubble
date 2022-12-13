@@ -13,16 +13,41 @@ classdef BubbleModel
     
         % Constructor.
         % p_BC: position of the camera frame C in the bubble frame B.
-        function this = BubbleModel(p_BP0, tris, T0, V0, p0)
+        function this = BubbleModel(p_BP0, tris, T0, V0, p0)            
            this.p_BP0 = p_BP0;
            this.tris = tris;
            this.T0 = T0;
-           this.V0 = V0;
-           this.p0 = p0;
+           
+           if nargin== 5
+            this.V0 = V0;
+            this.p0 = p0;
+           else
+            % Thes values are not used for problems wihtout contact.
+            % We set them to NaN so that if used by mistake, they lead to a
+            % trail of NaNs we can track.
+            this.V0 = nan;
+            this.p0 = nan;
+           end
            
            % Pre-compute quantities that do not change.
            [this.normal0_B, this.K, this.Aeq, this.node_areas, this.node_boundary, this.dVdu, this.areas_wbcs] = ...
-               QP_membrane_solver_preproc(p_BP0, tris, T0, V0, p0);                     
+               QP_membrane_solver_preproc(p_BP0, tris, T0, this.V0, this.p0);                     
+        end                
+        
+        % Computes deformed bubble solution for a given "fixed" value of
+        % internal pressure pv.
+        % Solves Eq. 5 in the paper (with pc = 0, no contact).
+        function [u, p_BP] = ComputeSolutionWithoutContact(this, pv)
+            % Computes displacements, solves Eq. 5.
+            rhs = pv * this.areas_wbcs;
+            u = this.K\rhs;
+            
+            % Solve for deformed positions.
+            nnodes = length(u);
+            p_BP = this.p_BP0;
+            for inode = 1:nnodes
+                p_BP(inode, :) = p_BP(inode, :) + u(inode) * this.normal0_B(inode, :);
+            end
         end
         
         % phi0: Distances from bubble to object. Either negative or close
