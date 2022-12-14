@@ -36,7 +36,7 @@ classdef BubbleModel
             %pv = 1.075582560000000e+03; % pv = 0.53 psi - p0
             max_iters = 50;
             relative_tolerance = 1.0e-4;
-            omega = 0.7;  % Relaxation. Found by trial and error.
+            omega = 0.7;  % Relaxation. Found by trial and error. orig: 0.7
             pv = 0;
             
             this.V0
@@ -45,46 +45,46 @@ classdef BubbleModel
             % External fixed-point iteration to find pressure.
             for it = 1:max_iters
             
-            [u, pv, p_BP, lambda] = QP_membrane_solver(...
-                this.p_BP0, this.tris, this.T0, ...
-                this.normal0_B, this.K, this.Aeq, ...
-                phi0, H, pv, this.areas_wbcs);
-            
-            % Volume
-            V = this.dVdu' * u + this.V0;
-            
-            % Compute new pressure. Gas ideal law.
-            % Use absolute pressure, i.e. add atmospheric pressure.
-            P0 = (this.p0+pa);
-            pvk = P0 * this.V0 / V - P0;
-            
-            % Limit pvk, specially for first few iterations.
-            pvk = min(pvk, 3*P0);
-            pvk = max(0, pvk);  % Pressure should in crease.
-            
-            %it
-            %V
-            %pvk
-            
-            % Convergence error.
-            pv_err = pvk - pv;
-            pv_rel_err = abs(pv_err/pvk);
-            
-            %pv_rel_err
-            
-            % Update pressure. Maybe use relaxation.
-            pv = omega * pvk + (1-omega) * pv;
-            
-            if (pv_rel_err < relative_tolerance)
-                sprintf('Converged at iteration %d. pv = %g', it, pv)
+                [u, pv, p_BP, lambda] = QP_membrane_solver(...
+                    this.p_BP0, this.tris, this.T0, ...
+                    this.normal0_B, this.K, this.Aeq, ...
+                    phi0, H, pv, this.areas_wbcs);
+                
+                % Volume
+                V = this.dVdu' * u + this.V0;
+                
+                % Compute new pressure. Gas ideal law.
+                % Use absolute pressure, i.e. add atmospheric pressure.
+                P0 = (this.p0+pa);
+                pvk = P0 * this.V0 / V - P0;
+                
+                % Limit pvk, specially for first few iterations.
+                pvk = min(pvk, 3*P0);
+                pvk = max(0, pvk);  % Pressure should in crease.
+                
+                %it
+                %V
+                %pvk
+                
+                % Convergence error.
+                pv_err = pvk - pv;
+                pv_rel_err = abs(pv_err/pvk);
+                
+                %pv_rel_err
+                
+                % Update pressure. Maybe use relaxation.
+                pv = omega * pvk + (1-omega) * pv;
                 break;
-            end            
+                if (pv_rel_err < relative_tolerance)
+                    sprintf('Converged at iteration %d. pv = %g', it, pv)
+                    break;
+                end            
             
             end
             
-            if (pv_rel_err > relative_tolerance)
-                error('DIVERGENCE!!! max-iters: %d. pv = %g', it, pv);
-            end            
+%             if (pv_rel_err > relative_tolerance)
+%                 error('DIVERGENCE!!! max-iters: %d. pv = %g', it, pv);
+%             end            
             
             npoints = size(this.p_BP0, 1);
             %u = x(1:npoints);

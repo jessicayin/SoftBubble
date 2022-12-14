@@ -4,8 +4,7 @@ function [phi0, H, Hcols]= shoot_rays_to_mesh(p_BP_list, normalP_B_list, mesh_tr
 % box_size: 3D vector with sides lenghts in box frame.
 % X_BO: pose of the box in the mesh (W) frame.
 
-dist_offset = 0.2;
-
+dist_offset = 0.2; %tune number to get more or less of edge of object (no forces on edges from shear force, not modeled)
 nnodes = size(p_BP_list, 1);
 
 X_OB = pose_inverse(X_BO);
@@ -69,6 +68,9 @@ for i=1:nnodes
         end
     end          
 end
+% nphi
+% sum(max(dist))
+% sum(min(dist))
 
 H = sparse(Hi(1:nphi),Hj(1:nphi),Hv(1:nphi),nphi,nnodes);
 phi0 = sparse(Hi(1:nphi),ones(nphi,1),phi0v(1:nphi),nphi,1);

@@ -9,8 +9,8 @@ function [X_WB, rpy] = box_pose(time, dt, X_WB, rpy0)
     %rpy = [pi/4, pi/4, 0];    % roll-pitch-yaw, in BodyZYX convention.
     rpy = rpy0;
     vz = -0.03; % m/s
-    p_WBo = [0, 0, 0.08 + vz * time]';  % Box center position in the W frame.
-    
+    p_WBo = [0, 0, 0.0 + vz * time]';  % Box center position in the W frame.orig: 0.08 + vz
+ 
     % Pose of the rigid box in the bubble frame.
     R_WB = MakeRpy(rpy);
     X_WB = MakePose(R_WB, p_WBo);

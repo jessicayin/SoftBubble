@@ -14,18 +14,17 @@ X_BO = MakePose(R_BO, p_BO);
 % Bubble surface mesh file.
 %bubble_mesh_path = 'bubble_R1p0_h0p5.obj';
 %bubble_mesh_path = 'bubble_R1p0_h0p5_res0p067.obj';
-bubble_mesh_path = 'bubble_R1p0_h0p5_res0p04.obj';
-
+bubble_mesh_path = 'bp_mesh_undeformed.obj';
 
 % Object surface mesh file.
-object_mesh_path = 'models/bridge_1.obj';
-%object_mesh_path = 'models/robot_block_40mm_1.obj';
+%object_mesh_path = 'models/bridge_1.obj';
+object_mesh_path = 'models/robot_block_40mm_1.obj';
 
 % Position of the picoflex camera frame C in the bubble frame B.
-p_BC = [0, 0, -0.112];  % Review this number from Alex's latest drawings.
+p_BC = [0, 0, -0.280];  % Review this number from Alex's latest drawings.
 
 sigma_percent = 0.01;
-sigma_dist = sigma_percent * 0.15; % distances are around 15 cm.
+sigma_dist = sigma_percent * 0.310; % distances are around 31 cm.
 
 % Estimated bubble tension from internal pressure.
 %  T₀⋅2π⋅a⋅sin(θ) = πa²⋅p₀
@@ -34,21 +33,28 @@ sigma_dist = sigma_percent * 0.15; % distances are around 15 cm.
 %  R = (h₀²+a²)/(2⋅h₀)
 % Therefore: 
 % That is: 2⋅T₀/R = p₀
-h0 = 0.0375; % Consistent with the mesh.
-a = 0.15 / 2; % Flat membrane radius.
-R=(h0^2+a^2)/2/h0;  % Spherical cap radius.
+% h0 = 0.021; % Consistent with the mesh.
+% a = 0.115; % Flat membrane radius.
+% R=(h0^2+a^2)/2/h0;  % Spherical cap radius.
 
-p0_psi = 0.3; % From Naveen's latest. Order of magnitude.
+p0_psi = 0.1; % From Naveen's latest. Order of magnitude.
 psi_to_pa = 6894.76;
 p0 = p0_psi * psi_to_pa;  % [Pa]
 T0 = p0 * R / 2; % Young–Laplace equation.
 
 % Bubble chumber dimensions (we are interested in volume for pressure
 % changes).
-h_chamber = 0.1245; % Chamber height.
-Vchamber = pi * a^2 * h_chamber;
-Vcap = pi/6*h0*(3*a^2 + h0^2); %Spherical cap.
-V0 = Vchamber + Vcap;
+%h_chamber = 0.1245; % Chamber height.
+%Vchamber = pi * a^2 * h_chamber;
+%Vcap = pi/6*h0*(3*a^2 + h0^2); %Spherical cap.
+%V0 = Vchamber + Vcap;
+
+scaling_factor = 1.3;
+Vcap = scaling_factor * 0.0012629625569412677; %volume of convex hull of undeformed mesh
+Vchamber = 0.023923736759999997964
+V0 = Vcap + Vchamber;
+
+
 
 %T0_psi = 0.15;  % [psi]
 %T0 = 6894.76 * T0_psi;  % T0 in Pascal.
@@ -56,11 +62,13 @@ V0 = Vchamber + Vcap;
 sprintf('Reading mesh file...')
 tic
 % Bubble mesh.
-D = 0.15;  % Bubble diameter, in meters.
+%D = 0.15;  % Bubble diameter, in meters.
 [p_BP0, tris]=read_obj(bubble_mesh_path);
+tris = readmatrix("undeformed_bp_mtris.txt");
+p_BP0 = p_BP0 * scaling_factor; %the mesh does not cover the entire surface of the membrane. scale up to make it more realistic
 % The original mesh is dimensionless with R = 1 and h = 0.5.
 % With D = 0.15 this results in h = 37.5 mm (it should be about 44 mm).
-p_BP0 = p_BP0 * D / 2;
+%p_BP0 = p_BP0 * D / 2;
 toc
 
 % =========================================================================
@@ -77,7 +85,7 @@ toc
 % =========================================================================
 sprintf('Constructing camera...')
 tic
-camera = PicoFlexCamera(p_BC, p_BP0, tris);
+camera = RealsenseCamera(p_BC, p_BP0, tris);
 toc
 
 sprintf('Generating point cloud on undeformed bubble...')
@@ -148,6 +156,7 @@ end
 %X_BO_sequence(:, :, 1) = X_BO;
 
 for istep = 0:(size(X_BO_sequence, 3)-1)
+% for istep = 0:1
 %for istep = nsteps:nsteps
 %for istep = 49:49
     time = istep * dt;
@@ -165,6 +174,7 @@ for istep = 0:(size(X_BO_sequence, 3)-1)
     [phi0, H, Hj] = shoot_rays_to_mesh(p_BP0, bubble.normal0_B, object_tree, X_BO);
     
     [u, pc,  pv, p_BP, Hmean, lambda] = bubble.ComputeSolution(phi0, H, Hj);
+    %[u, pc,  pv, p_BP, Hmean, lambda] = bubble.ComputeSolution([], [], []);
     toc
     
     % =========================================================================
@@ -251,9 +261,3 @@ fid = fopen(file, 'w');
 vtk_write_header(fid, 'bubble_reference');
 vtk_write_unstructured_grid(fid, p_BP0, tris);
 fclose(fid);
-
-
-
-
-
-            
